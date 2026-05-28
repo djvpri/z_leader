@@ -1,0 +1,5 @@
+# Ignore everything except the z_leader project
+*
+!z_leader/
+!z_leader/**
+!.gitignore

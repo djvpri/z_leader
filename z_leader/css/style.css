@@ -178,6 +178,40 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Trade Balance ── */
+#panel-trade { margin-bottom: 4px; }
+
+.trade-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+}
+
+.trade-icon { font-size: 13px; width: 18px; flex-shrink: 0; }
+.trade-name { flex: 1; color: #64748b; font-size: 11px; }
+
+.trade-badge {
+  font-size: 9px; font-weight: 700;
+  padding: 1px 5px; border-radius: 3px;
+  letter-spacing: 0.05em; flex-shrink: 0;
+}
+.trade-badge.export { background: #14532d; color: #4ade80; }
+.trade-badge.import { background: #450a0a; color: #f87171; }
+
+.trade-val {
+  font-size: 11px; font-weight: 600;
+  min-width: 54px; text-align: right; flex-shrink: 0;
+}
+
+.trade-balance-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 5px 0 2px; margin-top: 3px;
+  border-top: 1px solid #1e3a4a; font-size: 12px;
+}
+.trade-balance-row label { color: #64748b; font-size: 11px; }
+#trade-total { font-weight: 700; font-size: 12px; }
+
 /* ── Budget ── */
 .budget-summary { margin-bottom: 10px; }
 

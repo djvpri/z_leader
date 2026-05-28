@@ -274,7 +274,7 @@ const GameState = {
     if (player.tradePartners.includes(tid)) return false;
     player.tradePartners.push(tid);
     target.tradePartners.push(this.playerCountryId);
-    Notifications.show(`Trade agreement with <b>${target.name}</b> — quarterly GDP bonus active.`, 'alliance', 5000);
+    Notifications.show(`Trade agreement with <b>${target.name}</b> — export income boosted each quarter.`, 'alliance', 5000);
     return true;
   },
 
@@ -467,7 +467,27 @@ const GameState = {
     const milSpend   = revenue * b.militaryAlloc;
     const devSpend   = revenue * b.devAlloc;
     const toTreasury = revenue - milSpend - devSpend;
-    return { revenue, milSpend, devSpend, toTreasury };
+    const tradeBal   = this.calcTradeBalance(id).total;
+    const net        = toTreasury + tradeBal;
+    return { revenue, milSpend, devSpend, toTreasury, tradeBal, net };
+  },
+
+  calcTradeBalance(id) {
+    const sid = String(id);
+    const c   = this.countries[sid];
+    if (!c) return { oil: 0, food: 0, industry: 0, total: 0 };
+    const BASE       = 40;
+    const isPlayer   = sid === this.playerCountryId;
+    const tradeMult  = (isPlayer && this.unlockedTechs.has('trade_networks')) ? 2 : 1;
+    const exportMult = 1 + c.tradePartners.length * 0.15 * tradeMult;
+    const rates      = { oil: 0.006, food: 0.004, industry: 0.005 };
+    const result     = { oil: 0, food: 0, industry: 0, total: 0 };
+    for (const [key, rate] of Object.entries(rates)) {
+      const surplus = (c.resources[key] - BASE) / 100;
+      result[key]   = c.gdp * surplus * rate * (surplus >= 0 ? exportMult : 1.2);
+      result.total += result[key];
+    }
+    return result;
   },
 
   checkVictory() {
@@ -553,6 +573,7 @@ const GameState = {
       const milSpend = revenue * b.militaryAlloc;
       const devSpend = revenue * b.devAlloc;
       country.treasury += revenue - milSpend - devSpend;
+      country.treasury += this.calcTradeBalance(id).total;
 
       // Military maintenance & recruitment
       const maintMult   = (isPlayer && this.unlockedTechs.has('adv_mfg')) ? 0.5 : 1;
@@ -578,12 +599,10 @@ const GameState = {
       const resBonus  = (res.oil + res.food + res.industry) / 250000 * resMult;
       const devMult   = (isPlayer && this.unlockedTechs.has('heavy_industry')) ? 2 : 1;
       const devBoost  = b.devAlloc * b.taxRate * 0.04 * devMult;
-      const warPenalty= isPlayer ? country.enemies.length * 0.0025 : 0;
-      const tradeMult = (isPlayer && this.unlockedTechs.has('trade_networks')) ? 2 : 1;
-      const tradeBonus  = country.tradePartners.length * 0.003 * tradeMult;
+      const warPenalty  = isPlayer ? country.enemies.length * 0.0025 : 0;
       const sanctionMult= (isPlayer && this.unlockedTechs.has('econ_hegemony')) ? 0.2 : 1;
       const sanctionHit = country.sanctionedBy.length  * 0.005 * sanctionMult;
-      country.gdp *= 1 + Math.max(0.0005, 0.0015 + devBoost + resBonus - warPenalty + tradeBonus - sanctionHit);
+      country.gdp *= 1 + Math.max(0.0005, 0.0015 + devBoost + resBonus - warPenalty - sanctionHit);
 
       if (isPlayer && this.unlockedTechs.has('banking') && country.treasury > 0) {
         country.treasury *= 1.005;

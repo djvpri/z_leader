@@ -84,6 +84,33 @@
             </div>
           </div>
 
+          <!-- Trade Balance (all countries) -->
+          <div id="panel-trade">
+            <div class="panel-section-title">Trade Balance (per Quarter)</div>
+            <div class="trade-row">
+              <span class="trade-icon">🛢</span>
+              <span class="trade-name">Oil</span>
+              <span id="trade-badge-oil" class="trade-badge export">EXPORT</span>
+              <span id="trade-val-oil" class="trade-val pos">+$0.0B</span>
+            </div>
+            <div class="trade-row">
+              <span class="trade-icon">🌾</span>
+              <span class="trade-name">Food</span>
+              <span id="trade-badge-food" class="trade-badge export">EXPORT</span>
+              <span id="trade-val-food" class="trade-val pos">+$0.0B</span>
+            </div>
+            <div class="trade-row">
+              <span class="trade-icon">⚙</span>
+              <span class="trade-name">Industry</span>
+              <span id="trade-badge-ind" class="trade-badge export">EXPORT</span>
+              <span id="trade-val-ind" class="trade-val pos">+$0.0B</span>
+            </div>
+            <div class="trade-balance-row">
+              <label>Net Trade</label>
+              <span id="trade-total" class="pos">+$0.0B</span>
+            </div>
+          </div>
+
           <!-- Budget (player only) -->
           <div id="panel-budget" style="display:none">
             <div class="panel-section-title">Budget (per Quarter)</div>
@@ -91,7 +118,9 @@
               <div class="budget-row"><label>Tax Revenue</label><span id="b-revenue" class="pos">+$0B</span></div>
               <div class="budget-row"><label>Military</label><span id="b-mil" class="neg">-$0B</span></div>
               <div class="budget-row"><label>Development</label><span id="b-dev" class="neg">-$0B</span></div>
-              <div class="budget-row net-row"><label>Net</label><span id="b-net">$0B</span></div>
+              <div class="budget-row net-row"><label>Budget Net</label><span id="b-net">$0B</span></div>
+              <div class="budget-row"><label>Trade</label><span id="b-trade">±$0B</span></div>
+              <div class="budget-row net-row"><label>Total</label><span id="b-total">$0B</span></div>
             </div>
             <div class="slider-group">
               <div class="slider-label"><span>Tax Rate</span><span id="lbl-tax" class="slider-val">20%</span></div>

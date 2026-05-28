@@ -220,6 +220,9 @@ const UI = {
     // Resources — always visible
     this._renderResources(c);
 
+    // Trade balance — always visible
+    this._renderTrade(sid, c);
+
     const isPlayer  = sid === GameState.playerCountryId;
     const hasPlayer = Boolean(GameState.playerCountryId);
     const isEnemy   = c.relation === 'enemy';
@@ -325,6 +328,38 @@ const UI = {
     const netEl = document.getElementById('b-net');
     netEl.textContent = (b.toTreasury >= 0 ? '+' : '') + fmt(b.toTreasury);
     netEl.className   = b.toTreasury >= 0 ? 'pos' : 'neg';
+    const tradeEl = document.getElementById('b-trade');
+    if (tradeEl) {
+      tradeEl.textContent = (b.tradeBal >= 0 ? '+' : '-') + fmt(b.tradeBal);
+      tradeEl.className   = b.tradeBal >= 0 ? 'pos' : 'neg';
+    }
+    const totalEl = document.getElementById('b-total');
+    if (totalEl) {
+      totalEl.textContent = (b.net >= 0 ? '+' : '-') + fmt(b.net);
+      totalEl.className   = b.net >= 0 ? 'pos' : 'neg';
+    }
+  },
+
+  _renderTrade(id, c) {
+    const tb  = GameState.calcTradeBalance(id);
+    const fmtV = v => (v >= 0 ? '+' : '-') + '$' + Math.abs(v).toFixed(1) + 'B';
+    const setRow = (valId, badgeId, val) => {
+      const valEl   = document.getElementById(valId);
+      const badgeEl = document.getElementById(badgeId);
+      if (!valEl || !badgeEl) return;
+      valEl.textContent = fmtV(val);
+      valEl.className   = 'trade-val ' + (val >= 0 ? 'pos' : 'neg');
+      badgeEl.textContent = val >= 0 ? 'EXPORT' : 'IMPORT';
+      badgeEl.className   = 'trade-badge ' + (val >= 0 ? 'export' : 'import');
+    };
+    setRow('trade-val-oil',  'trade-badge-oil',  tb.oil);
+    setRow('trade-val-food', 'trade-badge-food', tb.food);
+    setRow('trade-val-ind',  'trade-badge-ind',  tb.industry);
+    const totalEl = document.getElementById('trade-total');
+    if (totalEl) {
+      totalEl.textContent = fmtV(tb.total);
+      totalEl.className   = tb.total >= 0 ? 'pos' : 'neg';
+    }
   },
 
   _renderRelations(p) {
@@ -475,6 +510,7 @@ const UI = {
       document.getElementById('panel-treasury').textContent = `$${p.treasury.toFixed(0)}B`;
       document.getElementById('panel-military').textContent = `${p.military.toFixed(0)}K`;
       this._renderMilIntel(p);
+      this._renderTrade(GameState.playerCountryId, p);
       this._updateBudgetSummary();
       this._renderRelations(p);
       this._renderTechPanel();
