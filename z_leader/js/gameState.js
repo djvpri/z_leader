@@ -1,6 +1,5 @@
 'use strict';
 
-// ISO 3166-1 numeric codes as keys
 const COUNTRY_DATA = {
   4:   { name: 'Afghanistan',       gdp: 20,    population: 40,   military: 170, treasury: 10  },
   12:  { name: 'Algeria',           gdp: 191,   population: 45,   military: 317, treasury: 200 },
@@ -97,49 +96,37 @@ const COUNTRY_DATA = {
   716: { name: 'Zimbabwe',          gdp: 28,    population: 16,   military: 29,  treasury: 15  },
 };
 
-// Natural resource index (0–100) for major countries; others use defaults
 const RESOURCE_DATA = {
-  12:  { oil: 55, food: 35, industry: 30 }, // Algeria
-  32:  { oil: 25, food: 78, industry: 42 }, // Argentina
-  36:  { oil: 48, food: 72, industry: 58 }, // Australia
-  76:  { oil: 32, food: 82, industry: 52 }, // Brazil
-  124: { oil: 62, food: 76, industry: 68 }, // Canada
-  152: { oil: 20, food: 56, industry: 44 }, // Chile
-  156: { oil: 42, food: 72, industry: 96 }, // China
-  170: { oil: 32, food: 56, industry: 36 }, // Colombia
-  276: { oil: 8,  food: 62, industry: 92 }, // Germany
-  356: { oil: 22, food: 68, industry: 72 }, // India
-  360: { oil: 52, food: 68, industry: 62 }, // Indonesia
-  364: { oil: 82, food: 32, industry: 36 }, // Iran
-  368: { oil: 88, food: 28, industry: 28 }, // Iraq
-  392: { oil: 4,  food: 52, industry: 92 }, // Japan
-  410: { oil: 4,  food: 58, industry: 82 }, // South Korea
-  414: { oil: 96, food: 8,  industry: 32 }, // Kuwait
-  484: { oil: 58, food: 52, industry: 58 }, // Mexico
-  528: { oil: 18, food: 58, industry: 78 }, // Netherlands
-  566: { oil: 68, food: 52, industry: 28 }, // Nigeria
-  578: { oil: 72, food: 46, industry: 58 }, // Norway
-  586: { oil: 14, food: 52, industry: 36 }, // Pakistan
-  616: { oil: 12, food: 72, industry: 68 }, // Poland
-  634: { oil: 92, food: 8,  industry: 32 }, // Qatar
-  643: { oil: 92, food: 58, industry: 72 }, // Russia
-  682: { oil: 96, food: 10, industry: 42 }, // Saudi Arabia
-  710: { oil: 18, food: 58, industry: 48 }, // South Africa
-  724: { oil: 8,  food: 56, industry: 72 }, // Spain
-  752: { oil: 10, food: 52, industry: 78 }, // Sweden
-  764: { oil: 26, food: 72, industry: 58 }, // Thailand
-  792: { oil: 22, food: 62, industry: 62 }, // Turkey
-  804: { oil: 16, food: 68, industry: 48 }, // Ukraine
-  784: { oil: 88, food: 8,  industry: 48 }, // UAE
-  826: { oil: 32, food: 58, industry: 78 }, // UK
-  840: { oil: 78, food: 92, industry: 96 }, // USA
-  862: { oil: 78, food: 52, industry: 28 }, // Venezuela
-  704: { oil: 16, food: 72, industry: 52 }, // Vietnam
+  12:  { oil: 55, food: 35, industry: 30 }, 32:  { oil: 25, food: 78, industry: 42 },
+  36:  { oil: 48, food: 72, industry: 58 }, 76:  { oil: 32, food: 82, industry: 52 },
+  124: { oil: 62, food: 76, industry: 68 }, 152: { oil: 20, food: 56, industry: 44 },
+  156: { oil: 42, food: 72, industry: 96 }, 170: { oil: 32, food: 56, industry: 36 },
+  276: { oil: 8,  food: 62, industry: 92 }, 356: { oil: 22, food: 68, industry: 72 },
+  360: { oil: 52, food: 68, industry: 62 }, 364: { oil: 82, food: 32, industry: 36 },
+  368: { oil: 88, food: 28, industry: 28 }, 392: { oil: 4,  food: 52, industry: 92 },
+  410: { oil: 4,  food: 58, industry: 82 }, 414: { oil: 96, food: 8,  industry: 32 },
+  484: { oil: 58, food: 52, industry: 58 }, 528: { oil: 18, food: 58, industry: 78 },
+  566: { oil: 68, food: 52, industry: 28 }, 578: { oil: 72, food: 46, industry: 58 },
+  586: { oil: 14, food: 52, industry: 36 }, 616: { oil: 12, food: 72, industry: 68 },
+  634: { oil: 92, food: 8,  industry: 32 }, 643: { oil: 92, food: 58, industry: 72 },
+  682: { oil: 96, food: 10, industry: 42 }, 710: { oil: 18, food: 58, industry: 48 },
+  724: { oil: 8,  food: 56, industry: 72 }, 752: { oil: 10, food: 52, industry: 78 },
+  764: { oil: 26, food: 72, industry: 58 }, 792: { oil: 22, food: 62, industry: 62 },
+  804: { oil: 16, food: 68, industry: 48 }, 784: { oil: 88, food: 8,  industry: 48 },
+  826: { oil: 32, food: 58, industry: 78 }, 840: { oil: 78, food: 92, industry: 96 },
+  862: { oil: 78, food: 52, industry: 28 }, 704: { oil: 16, food: 72, industry: 52 },
 };
 
 const DEFAULT_RESOURCES = { oil: 18, food: 42, industry: 28 };
+const DEFAULT_BUDGET    = { taxRate: 0.20, militaryAlloc: 0.30, devAlloc: 0.30 };
 
-const DEFAULT_BUDGET = { taxRate: 0.20, militaryAlloc: 0.30, devAlloc: 0.30 };
+// Recruit packs: each costs $50B
+const RECRUIT_PACKS = {
+  infantry:  { amount: 100, cost: 50, label: 'Infantry  +100K — $50B' },
+  tanks:     { amount: 10,  cost: 50, label: 'Armor     +10K  — $50B' },
+  artillery: { amount: 5,   cost: 50, label: 'Artillery +5K   — $50B' },
+  fighters:  { amount: 5,   cost: 50, label: 'Air Force +5K   — $50B' },
+};
 
 const GameState = {
   playerCountryId: null,
@@ -148,22 +135,36 @@ const GameState = {
   year: 2026,
   quarter: 1,
   paused: true,
+  attackReady: true, // cooldown: one attack per quarter
 
   init() {
     for (const [id, data] of Object.entries(COUNTRY_DATA)) {
+      const m = data.military;
       this.countries[id] = {
         ...data,
-        allies: [],
-        enemies: [],
-        relation: 'neutral',
-        resources: { ...(RESOURCE_DATA[id] || DEFAULT_RESOURCES) },
-        budget: { ...DEFAULT_BUDGET },
+        allies:     [],
+        enemies:    [],
+        relation:   'neutral',
+        resources:  { ...(RESOURCE_DATA[id] || DEFAULT_RESOURCES) },
+        budget:     { ...DEFAULT_BUDGET },
+        units: {
+          infantry:  Math.round(m * 0.70),
+          tanks:     Math.round(m * 0.15),
+          artillery: Math.round(m * 0.08),
+          fighters:  Math.round(m * 0.07),
+        },
+        occupiedBy: null,
       };
     }
   },
 
-  getCountry(id) {
-    return this.countries[String(id)] || null;
+  getCountry(id) { return this.countries[String(id)] || null; },
+
+  calcStrength(id) {
+    const c = this.countries[String(id)];
+    if (!c) return 0;
+    const u = c.units;
+    return u.infantry + u.tanks * 5 + u.artillery * 8 + u.fighters * 6;
   },
 
   setPlayer(countryId) {
@@ -178,10 +179,10 @@ const GameState = {
     if (!this.playerCountryId) return;
     const player = this.countries[this.playerCountryId];
     for (const [id, country] of Object.entries(this.countries)) {
-      if (id === this.playerCountryId)          country.relation = 'player';
-      else if (player.allies.includes(id))      country.relation = 'ally';
-      else if (player.enemies.includes(id))     country.relation = 'enemy';
-      else                                       country.relation = 'neutral';
+      if (id === this.playerCountryId)      country.relation = 'player';
+      else if (player.allies.includes(id))  country.relation = 'ally';
+      else if (player.enemies.includes(id)) country.relation = 'enemy';
+      else                                   country.relation = 'neutral';
     }
   },
 
@@ -194,7 +195,6 @@ const GameState = {
     if (target) {
       target.allies  = target.allies.filter(id => id !== this.playerCountryId);
       target.enemies = [...new Set([...target.enemies, this.playerCountryId])];
-      Notifications.show(`War declared on <b>${target.name}</b>! Mobilize your forces.`, 'war', 7000);
     }
     this.updateRelations();
   },
@@ -225,52 +225,109 @@ const GameState = {
     this.updateRelations();
   },
 
+  // Attack: auto-declares war, resolves combat, returns result
+  attack(targetId) {
+    if (!this.playerCountryId || !this.attackReady) return null;
+    const tid = String(targetId);
+    const target = this.countries[tid];
+    if (!target) return null;
+
+    // Auto-declare war
+    const player = this.countries[this.playerCountryId];
+    if (!player.enemies.includes(tid)) {
+      this.declareWar(tid);
+      Notifications.show(`War declared on <b>${target.name}</b>!`, 'war', 5000);
+    }
+
+    const atkStr = this.calcStrength(this.playerCountryId);
+    const defStr = this.calcStrength(tid);
+    const ratio  = atkStr / (defStr * 1.25 + 1);
+
+    let outcome, atkLoss, defLoss;
+    if      (ratio >= 2.0) { outcome = 'decisive'; atkLoss = 0.05; defLoss = 0.65; }
+    else if (ratio >= 1.0) { outcome = 'victory';  atkLoss = 0.15; defLoss = 0.40; }
+    else if (ratio >= 0.6) { outcome = 'stalemate';atkLoss = 0.20; defLoss = 0.20; }
+    else                   { outcome = 'defeat';   atkLoss = 0.30; defLoss = 0.08; }
+
+    this._applyLosses(this.playerCountryId, atkLoss);
+    this._applyLosses(tid, defLoss);
+    this.attackReady = false; // cooldown until next tick
+
+    return { outcome, atkStr, defStr, targetName: target.name };
+  },
+
+  _applyLosses(id, ratio) {
+    const c = this.countries[String(id)];
+    if (!c) return;
+    for (const key of Object.keys(c.units)) {
+      c.units[key] = Math.max(0, Math.round(c.units[key] * (1 - ratio)));
+    }
+    c.military = Math.max(1, c.units.infantry + c.units.tanks + c.units.artillery + c.units.fighters);
+  },
+
+  recruitUnits(type) {
+    if (!this.playerCountryId) return false;
+    const pack = RECRUIT_PACKS[type];
+    if (!pack) return false;
+    const p = this.countries[this.playerCountryId];
+    if (p.treasury < pack.cost) return false;
+    p.treasury    -= pack.cost;
+    p.units[type]  = (p.units[type] || 0) + pack.amount;
+    p.military     = p.units.infantry + p.units.tanks + p.units.artillery + p.units.fighters;
+    return true;
+  },
+
   setPlayerBudget(field, value) {
     if (!this.playerCountryId) return;
     this.countries[this.playerCountryId].budget[field] = value;
   },
 
-  // Returns quarterly income breakdown for a country
   calcBudget(id) {
     const c = this.countries[String(id)];
     if (!c) return null;
-    const b           = c.budget;
-    const revenue     = c.gdp * b.taxRate / 4;
-    const milSpend    = revenue * b.militaryAlloc;
-    const devSpend    = revenue * b.devAlloc;
-    const toTreasury  = revenue - milSpend - devSpend;
+    const b          = c.budget;
+    const revenue    = c.gdp * b.taxRate / 4;
+    const milSpend   = revenue * b.militaryAlloc;
+    const devSpend   = revenue * b.devAlloc;
+    const toTreasury = revenue - milSpend - devSpend;
     return { revenue, milSpend, devSpend, toTreasury };
   },
 
   tickUpdate() {
     this.quarter++;
     if (this.quarter > 4) { this.quarter = 1; this.year++; }
+    this.attackReady = true; // reset attack cooldown each quarter
 
     for (const [id, country] of Object.entries(this.countries)) {
-      const b          = country.budget;
-      const revenue    = country.gdp * b.taxRate / 4;
-      const milSpend   = revenue * b.militaryAlloc;
-      const devSpend   = revenue * b.devAlloc;
+      const b       = country.budget;
+      const revenue = country.gdp * b.taxRate / 4;
+      const milSpend= revenue * b.militaryAlloc;
+      const devSpend= revenue * b.devAlloc;
       country.treasury += revenue - milSpend - devSpend;
 
-      // Military: maintenance vs. spending
-      const maintenance = country.military * 0.0012; // quarterly upkeep in $B
+      // Military maintenance & recruitment
+      const maintenance = country.military * 0.0012;
       const milSurplus  = milSpend - maintenance;
       if (milSurplus > 0) {
-        country.military += milSurplus / 12; // $12B per 1K new troops
+        const newTroops = milSurplus / 12;
+        // Distribute new troops proportionally to existing unit types
+        const total = Math.max(1, country.military);
+        for (const key of Object.keys(country.units)) {
+          country.units[key] += Math.round(newTroops * (country.units[key] / total));
+        }
       } else {
-        country.military = Math.max(1, country.military + milSurplus * 2);
+        this._applyLosses(id, Math.min(0.05, -milSurplus / (country.military + 1)));
       }
+      country.military = Math.max(1,
+        country.units.infantry + country.units.tanks + country.units.artillery + country.units.fighters
+      );
 
-      // GDP growth: base + dev boost + resource bonus - war penalty
-      const res         = country.resources;
-      const resBonus    = (res.oil + res.food + res.industry) / 250000;
-      const devBoost    = b.devAlloc * b.taxRate * 0.04;
-      const warPenalty  = id === this.playerCountryId
-        ? country.enemies.length * 0.0025
-        : 0;
-      const growth      = Math.max(0.0005, 0.0015 + devBoost + resBonus - warPenalty);
-      country.gdp      *= 1 + growth;
+      // GDP growth
+      const res      = country.resources;
+      const resBonus = (res.oil + res.food + res.industry) / 250000;
+      const devBoost = b.devAlloc * b.taxRate * 0.04;
+      const warPenalty = id === this.playerCountryId ? country.enemies.length * 0.0025 : 0;
+      country.gdp   *= 1 + Math.max(0.0005, 0.0015 + devBoost + resBonus - warPenalty);
     }
   },
 };

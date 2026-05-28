@@ -245,6 +245,47 @@ input[type=range]::-webkit-slider-thumb:hover { background: #93c5fd; }
 .rel-tag.enemy { background: #2a0f0f; color: #fca5a5; border-color: #7f1d1d; }
 .rel-tag.enemy:hover { background: #3f0c0c; }
 
+/* ── Military Intel / Units ── */
+#panel-mil-intel { margin-bottom: 4px; }
+
+.unit-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 5px;
+  font-size: 12px;
+}
+
+.unit-icon { font-size: 13px; width: 18px; flex-shrink: 0; }
+.unit-name { color: #64748b; flex: 1; }
+.unit-val  { color: #e2e8f0; font-weight: 600; font-size: 12px; }
+
+.strength-val {
+  color: #fbbf24;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* ── Recruit ── */
+#panel-recruit { margin-bottom: 4px; }
+
+.recruit-btn {
+  display: block;
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 7px 10px;
+  background: #0f2a18;
+  border: 1px solid #14532d;
+  color: #86efac;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  text-align: left;
+  transition: background 0.15s;
+}
+.recruit-btn:hover    { background: #14532d; }
+.recruit-btn:disabled { opacity: 0.4; cursor: default; }
+
 /* ── Panel Actions ── */
 #panel-actions { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
 

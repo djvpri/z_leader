@@ -17,6 +17,7 @@
         <div class="resource">GDP: $<span id="gdp">0</span>B/yr</div>
         <div class="resource">Population: <span id="population">0</span>M</div>
         <div class="resource">Military: <span id="military">0</span>K</div>
+        <div class="resource">Strength: <span id="hud-strength">0</span></div>
       </div>
       <div id="game-controls">
         <div id="speed-controls">
@@ -47,7 +48,17 @@
           <div class="stat-row"><label>Treasury</label><span id="panel-treasury"></span></div>
           <div class="stat-row"><label>Status</label><span id="panel-status"></span></div>
 
-          <!-- Resources (visible for all countries) -->
+          <!-- Military intel (all countries) -->
+          <div id="panel-mil-intel">
+            <div class="panel-section-title">Military Intel</div>
+            <div class="stat-row"><label>Combat Strength</label><span id="intel-strength" class="strength-val">0</span></div>
+            <div class="unit-row"><span class="unit-icon">👣</span><span class="unit-name">Infantry</span><span id="intel-infantry" class="unit-val">0K</span></div>
+            <div class="unit-row"><span class="unit-icon">🛡</span><span class="unit-name">Armor</span><span id="intel-tanks" class="unit-val">0K</span></div>
+            <div class="unit-row"><span class="unit-icon">💥</span><span class="unit-name">Artillery</span><span id="intel-artillery" class="unit-val">0K</span></div>
+            <div class="unit-row"><span class="unit-icon">✈</span><span class="unit-name">Air Force</span><span id="intel-fighters" class="unit-val">0K</span></div>
+          </div>
+
+          <!-- Resources (all countries) -->
           <div id="panel-resources">
             <div class="panel-section-title">Natural Resources</div>
             <div class="res-row">
@@ -67,7 +78,7 @@
             </div>
           </div>
 
-          <!-- Budget (visible only for player's country) -->
+          <!-- Budget (player only) -->
           <div id="panel-budget" style="display:none">
             <div class="panel-section-title">Budget (per Quarter)</div>
             <div class="budget-summary">
@@ -76,46 +87,44 @@
               <div class="budget-row"><label>Development</label><span id="b-dev" class="neg">-$0B</span></div>
               <div class="budget-row net-row"><label>Net</label><span id="b-net">$0B</span></div>
             </div>
-
             <div class="slider-group">
-              <div class="slider-label">
-                <span>Tax Rate</span><span id="lbl-tax" class="slider-val">20%</span>
-              </div>
+              <div class="slider-label"><span>Tax Rate</span><span id="lbl-tax" class="slider-val">20%</span></div>
               <input type="range" id="sld-tax" min="5" max="45" value="20" step="1">
             </div>
             <div class="slider-group">
-              <div class="slider-label">
-                <span>Military Alloc.</span><span id="lbl-mil" class="slider-val">30%</span>
-              </div>
+              <div class="slider-label"><span>Military Alloc.</span><span id="lbl-mil" class="slider-val">30%</span></div>
               <input type="range" id="sld-mil" min="0" max="90" value="30" step="5">
             </div>
             <div class="slider-group">
-              <div class="slider-label">
-                <span>Development</span><span id="lbl-dev" class="slider-val">30%</span>
-              </div>
+              <div class="slider-label"><span>Development</span><span id="lbl-dev" class="slider-val">30%</span></div>
               <input type="range" id="sld-dev" min="0" max="90" value="30" step="5">
             </div>
           </div>
 
-          <!-- Relations (visible only for player's country) -->
+          <!-- Recruit (player only) -->
+          <div id="panel-recruit" style="display:none">
+            <div class="panel-section-title">Recruit Units</div>
+            <button class="recruit-btn" data-type="infantry">👣 Infantry  +100K — $50B</button>
+            <button class="recruit-btn" data-type="tanks">🛡 Armor      +10K  — $50B</button>
+            <button class="recruit-btn" data-type="artillery">💥 Artillery  +5K   — $50B</button>
+            <button class="recruit-btn" data-type="fighters">✈ Air Force  +5K   — $50B</button>
+          </div>
+
+          <!-- Relations (player only) -->
           <div id="panel-relations" style="display:none">
             <div class="relations-block">
-              <div class="relations-header">
-                Allies <span id="panel-allies-count" class="rel-count">0</span>
-              </div>
+              <div class="relations-header">Allies <span id="panel-allies-count" class="rel-count">0</span></div>
               <div id="panel-allies-list" class="relations-list"></div>
             </div>
             <div class="relations-block">
-              <div class="relations-header">
-                Enemies <span id="panel-enemies-count" class="rel-count enemy">0</span>
-              </div>
+              <div class="relations-header">Enemies <span id="panel-enemies-count" class="rel-count enemy">0</span></div>
               <div id="panel-enemies-list" class="relations-list"></div>
             </div>
           </div>
 
           <div id="panel-actions">
             <button id="btn-play-as" class="action-btn">Play as this Country</button>
-            <button id="btn-declare-war" class="action-btn danger" style="display:none">Declare War</button>
+            <button id="btn-attack" class="action-btn danger" style="display:none">⚔ Attack</button>
             <button id="btn-propose-alliance" class="action-btn success" style="display:none">Propose Alliance</button>
             <button id="btn-make-peace" class="action-btn neutral" style="display:none">Propose Peace</button>
           </div>
