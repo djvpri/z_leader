@@ -144,6 +144,23 @@ const UI = {
       this.updateHUD();
     });
 
+    document.getElementById('btn-annex').addEventListener('click', () => {
+      const id = GameState.selectedCountryId;
+      if (!id || id === GameState.playerCountryId) return;
+      const c = GameState.getCountry(id);
+      if (!c) return;
+      if (confirm(`Annex ${c.name}? Their territory will be permanently absorbed into your nation.`)) {
+        const ok = GameState.annex(id);
+        if (!ok) {
+          Notifications.show('Cannot annex — enemy must be devastated (< 50K troops) and at war.', 'warning', 4000);
+          return;
+        }
+        WorldMap.refresh();
+        this.showCountryPanel(id);
+        this.updateHUD();
+      }
+    });
+
     // Recruit buttons (event delegation)
     document.getElementById('panel-recruit').addEventListener('click', (e) => {
       const btn = e.target.closest('.recruit-btn');
@@ -178,7 +195,9 @@ const UI = {
       return;
     }
 
-    document.getElementById('panel-actions').style.display = 'block';
+    const isTerritory = c.occupiedBy === GameState.playerCountryId;
+
+    document.getElementById('panel-actions').style.display = isTerritory ? 'none' : 'block';
     document.getElementById('panel-country-name').textContent = c.name;
     document.getElementById('panel-gdp').textContent        = `$${c.gdp.toFixed(0)}B/yr`;
     document.getElementById('panel-population').textContent = `${c.population.toFixed(1)}M`;
@@ -186,7 +205,7 @@ const UI = {
     document.getElementById('panel-treasury').textContent   = `$${c.treasury.toFixed(0)}B`;
 
     const statusMap = { player: 'You', ally: 'Ally', enemy: 'Enemy', neutral: 'Neutral' };
-    document.getElementById('panel-status').textContent = statusMap[c.relation] || 'Neutral';
+    document.getElementById('panel-status').textContent = isTerritory ? 'Your Territory' : (statusMap[c.relation] || 'Neutral');
 
     // Military intel — always visible
     document.getElementById('panel-mil-intel').style.display = 'block';
@@ -244,6 +263,7 @@ const UI = {
     document.getElementById('btn-sanction').style.display         = (hasPlayer && !isPlayer && !isAlly && !isSanctioning) ? 'block' : 'none';
     document.getElementById('btn-lift-sanctions').style.display   = (hasPlayer && !isPlayer && isSanctioning) ? 'block' : 'none';
     document.getElementById('btn-demand-tribute').style.display   = (hasPlayer && canTribute) ? 'block' : 'none';
+    document.getElementById('btn-annex').style.display            = (hasPlayer && GameState.canAnnex(sid)) ? 'block' : 'none';
 
     // Disable attack button if on cooldown
     document.getElementById('btn-attack').disabled = !GameState.attackReady;

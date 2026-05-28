@@ -340,6 +340,68 @@ const GameState = {
     return true;
   },
 
+  canAnnex(targetId) {
+    if (!this.playerCountryId) return false;
+    const tid    = String(targetId);
+    const player = this.countries[this.playerCountryId];
+    const target = this.countries[tid];
+    if (!target || target.occupiedBy) return false;
+    if (!player.enemies.includes(tid)) return false;
+    return target.military < 50; // country must be devastated
+  },
+
+  annex(targetId) {
+    if (!this.canAnnex(targetId)) return false;
+    const tid    = String(targetId);
+    const player = this.countries[this.playerCountryId];
+    const target = this.countries[tid];
+
+    const gdpGain = target.gdp * 0.40;
+    const trsGain = Math.max(0, target.treasury * 0.25);
+    const milGain = Math.round(target.military * 0.50);
+
+    player.gdp      += gdpGain;
+    player.treasury += trsGain;
+
+    const total = Math.max(1, target.military);
+    for (const key of Object.keys(player.units)) {
+      player.units[key] += Math.round(milGain * ((target.units[key] || 0) / total));
+    }
+    player.military = player.units.infantry + player.units.tanks + player.units.artillery + player.units.fighters;
+
+    // Partial resource absorption
+    const pRes = player.resources, tRes = target.resources;
+    pRes.oil      = Math.min(100, pRes.oil      + Math.round(tRes.oil      * 0.30));
+    pRes.food     = Math.min(100, pRes.food     + Math.round(tRes.food     * 0.30));
+    pRes.industry = Math.min(100, pRes.industry + Math.round(tRes.industry * 0.30));
+
+    // Mark territory and strip it
+    target.occupiedBy    = this.playerCountryId;
+    target.gdp           = 0;
+    target.military      = 0;
+    target.treasury      = 0;
+    target.units         = { infantry: 0, tanks: 0, artillery: 0, fighters: 0 };
+    target.enemies       = [];
+    target.allies        = [];
+    target.tradePartners = [];
+    target.sanctionedBy  = [];
+
+    // Remove from all other countries' relation lists
+    for (const c of Object.values(this.countries)) {
+      c.enemies       = c.enemies.filter(x => x !== tid);
+      c.allies        = c.allies.filter(x => x !== tid);
+      c.tradePartners = c.tradePartners.filter(x => x !== tid);
+    }
+
+    this.updateRelations();
+
+    Notifications.show(
+      `<b>${target.name}</b> annexed! +$${gdpGain.toFixed(0)}B GDP, +$${trsGain.toFixed(0)}B treasury, +${milGain}K troops.`,
+      'milestone', 9000
+    );
+    return true;
+  },
+
   // Attack: auto-declares war, resolves combat, returns result
   attack(targetId) {
     if (!this.playerCountryId || !this.attackReady) return null;

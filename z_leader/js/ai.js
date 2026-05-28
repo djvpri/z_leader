@@ -22,7 +22,7 @@ const AI = {
 
   _process(id) {
     const c = GameState.countries[id];
-    if (!c) return;
+    if (!c || c.occupiedBy) return; // skip annexed territories
     this._adjustBudget(c);
     this._seekPeace(id, c);
     this._attackEnemies(id, c);

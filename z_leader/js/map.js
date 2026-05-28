@@ -135,12 +135,14 @@ const WorldMap = {
     if (sid === GameState.selectedCountryId) return this.COLORS.selected;
     const c = GameState.getCountry(id);
     if (!c) return this.COLORS.unknown;
+    if (c.occupiedBy === GameState.playerCountryId) return '#14532d'; // dark green = annexed territory
     return this.COLORS[c.relation] || this.COLORS.neutral;
   },
 
   _hoverColor(id) {
     const c = GameState.getCountry(id);
     if (!c) return this.HOVER.unknown;
+    if (c.occupiedBy === GameState.playerCountryId) return '#166534';
     return this.HOVER[c.relation] || this.HOVER.neutral;
   },
 
