@@ -47,6 +47,57 @@
           <div class="stat-row"><label>Treasury</label><span id="panel-treasury"></span></div>
           <div class="stat-row"><label>Status</label><span id="panel-status"></span></div>
 
+          <!-- Resources (visible for all countries) -->
+          <div id="panel-resources">
+            <div class="panel-section-title">Natural Resources</div>
+            <div class="res-row">
+              <span class="res-name">Oil</span>
+              <div class="res-bar"><div id="rbar-oil" class="res-fill res-oil"></div></div>
+              <span id="rval-oil" class="res-num">0</span>
+            </div>
+            <div class="res-row">
+              <span class="res-name">Food</span>
+              <div class="res-bar"><div id="rbar-food" class="res-fill res-food"></div></div>
+              <span id="rval-food" class="res-num">0</span>
+            </div>
+            <div class="res-row">
+              <span class="res-name">Industry</span>
+              <div class="res-bar"><div id="rbar-ind" class="res-fill res-ind"></div></div>
+              <span id="rval-ind" class="res-num">0</span>
+            </div>
+          </div>
+
+          <!-- Budget (visible only for player's country) -->
+          <div id="panel-budget" style="display:none">
+            <div class="panel-section-title">Budget (per Quarter)</div>
+            <div class="budget-summary">
+              <div class="budget-row"><label>Tax Revenue</label><span id="b-revenue" class="pos">+$0B</span></div>
+              <div class="budget-row"><label>Military</label><span id="b-mil" class="neg">-$0B</span></div>
+              <div class="budget-row"><label>Development</label><span id="b-dev" class="neg">-$0B</span></div>
+              <div class="budget-row net-row"><label>Net</label><span id="b-net">$0B</span></div>
+            </div>
+
+            <div class="slider-group">
+              <div class="slider-label">
+                <span>Tax Rate</span><span id="lbl-tax" class="slider-val">20%</span>
+              </div>
+              <input type="range" id="sld-tax" min="5" max="45" value="20" step="1">
+            </div>
+            <div class="slider-group">
+              <div class="slider-label">
+                <span>Military Alloc.</span><span id="lbl-mil" class="slider-val">30%</span>
+              </div>
+              <input type="range" id="sld-mil" min="0" max="90" value="30" step="5">
+            </div>
+            <div class="slider-group">
+              <div class="slider-label">
+                <span>Development</span><span id="lbl-dev" class="slider-val">30%</span>
+              </div>
+              <input type="range" id="sld-dev" min="0" max="90" value="30" step="5">
+            </div>
+          </div>
+
+          <!-- Relations (visible only for player's country) -->
           <div id="panel-relations" style="display:none">
             <div class="relations-block">
               <div class="relations-header">

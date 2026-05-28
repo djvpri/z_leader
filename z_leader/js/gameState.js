@@ -20,7 +20,6 @@ const COUNTRY_DATA = {
   170: { name: 'Colombia',          gdp: 344,   population: 51,   military: 295, treasury: 250 },
   178: { name: 'Congo',             gdp: 12,    population: 6,    military: 10,  treasury: 15  },
   180: { name: 'DR Congo',          gdp: 55,    population: 100,  military: 134, treasury: 40  },
-  204: { name: 'Benin',             gdp: 17,    population: 13,   military: 7,   treasury: 15  },
   214: { name: 'Dominican Rep.',    gdp: 94,    population: 11,   military: 53,  treasury: 80  },
   218: { name: 'Ecuador',           gdp: 107,   population: 18,   military: 41,  treasury: 90  },
   818: { name: 'Egypt',             gdp: 476,   population: 102,  military: 440, treasury: 400 },
@@ -61,7 +60,6 @@ const COUNTRY_DATA = {
   516: { name: 'Namibia',           gdp: 13,    population: 3,    military: 9,   treasury: 15  },
   524: { name: 'Nepal',             gdp: 36,    population: 30,   military: 96,  treasury: 25  },
   528: { name: 'Netherlands',       gdp: 1012,  population: 17,   military: 47,  treasury: 800 },
-  540: { name: 'New Caledonia',     gdp: 9,     population: 0.3,  military: 1,   treasury: 10  },
   566: { name: 'Nigeria',           gdp: 477,   population: 218,  military: 223, treasury: 300 },
   578: { name: 'Norway',            gdp: 579,   population: 5,    military: 28,  treasury: 800 },
   586: { name: 'Pakistan',          gdp: 376,   population: 231,  military: 651, treasury: 200 },
@@ -99,6 +97,50 @@ const COUNTRY_DATA = {
   716: { name: 'Zimbabwe',          gdp: 28,    population: 16,   military: 29,  treasury: 15  },
 };
 
+// Natural resource index (0–100) for major countries; others use defaults
+const RESOURCE_DATA = {
+  12:  { oil: 55, food: 35, industry: 30 }, // Algeria
+  32:  { oil: 25, food: 78, industry: 42 }, // Argentina
+  36:  { oil: 48, food: 72, industry: 58 }, // Australia
+  76:  { oil: 32, food: 82, industry: 52 }, // Brazil
+  124: { oil: 62, food: 76, industry: 68 }, // Canada
+  152: { oil: 20, food: 56, industry: 44 }, // Chile
+  156: { oil: 42, food: 72, industry: 96 }, // China
+  170: { oil: 32, food: 56, industry: 36 }, // Colombia
+  276: { oil: 8,  food: 62, industry: 92 }, // Germany
+  356: { oil: 22, food: 68, industry: 72 }, // India
+  360: { oil: 52, food: 68, industry: 62 }, // Indonesia
+  364: { oil: 82, food: 32, industry: 36 }, // Iran
+  368: { oil: 88, food: 28, industry: 28 }, // Iraq
+  392: { oil: 4,  food: 52, industry: 92 }, // Japan
+  410: { oil: 4,  food: 58, industry: 82 }, // South Korea
+  414: { oil: 96, food: 8,  industry: 32 }, // Kuwait
+  484: { oil: 58, food: 52, industry: 58 }, // Mexico
+  528: { oil: 18, food: 58, industry: 78 }, // Netherlands
+  566: { oil: 68, food: 52, industry: 28 }, // Nigeria
+  578: { oil: 72, food: 46, industry: 58 }, // Norway
+  586: { oil: 14, food: 52, industry: 36 }, // Pakistan
+  616: { oil: 12, food: 72, industry: 68 }, // Poland
+  634: { oil: 92, food: 8,  industry: 32 }, // Qatar
+  643: { oil: 92, food: 58, industry: 72 }, // Russia
+  682: { oil: 96, food: 10, industry: 42 }, // Saudi Arabia
+  710: { oil: 18, food: 58, industry: 48 }, // South Africa
+  724: { oil: 8,  food: 56, industry: 72 }, // Spain
+  752: { oil: 10, food: 52, industry: 78 }, // Sweden
+  764: { oil: 26, food: 72, industry: 58 }, // Thailand
+  792: { oil: 22, food: 62, industry: 62 }, // Turkey
+  804: { oil: 16, food: 68, industry: 48 }, // Ukraine
+  784: { oil: 88, food: 8,  industry: 48 }, // UAE
+  826: { oil: 32, food: 58, industry: 78 }, // UK
+  840: { oil: 78, food: 92, industry: 96 }, // USA
+  862: { oil: 78, food: 52, industry: 28 }, // Venezuela
+  704: { oil: 16, food: 72, industry: 52 }, // Vietnam
+};
+
+const DEFAULT_RESOURCES = { oil: 18, food: 42, industry: 28 };
+
+const DEFAULT_BUDGET = { taxRate: 0.20, militaryAlloc: 0.30, devAlloc: 0.30 };
+
 const GameState = {
   playerCountryId: null,
   selectedCountryId: null,
@@ -111,11 +153,11 @@ const GameState = {
     for (const [id, data] of Object.entries(COUNTRY_DATA)) {
       this.countries[id] = {
         ...data,
-        gdp: data.gdp,
-        treasury: data.treasury,
         allies: [],
         enemies: [],
         relation: 'neutral',
+        resources: { ...(RESOURCE_DATA[id] || DEFAULT_RESOURCES) },
+        budget: { ...DEFAULT_BUDGET },
       };
     }
   },
@@ -136,26 +178,21 @@ const GameState = {
     if (!this.playerCountryId) return;
     const player = this.countries[this.playerCountryId];
     for (const [id, country] of Object.entries(this.countries)) {
-      if (id === this.playerCountryId) {
-        country.relation = 'player';
-      } else if (player.allies.includes(id)) {
-        country.relation = 'ally';
-      } else if (player.enemies.includes(id)) {
-        country.relation = 'enemy';
-      } else {
-        country.relation = 'neutral';
-      }
+      if (id === this.playerCountryId)          country.relation = 'player';
+      else if (player.allies.includes(id))      country.relation = 'ally';
+      else if (player.enemies.includes(id))     country.relation = 'enemy';
+      else                                       country.relation = 'neutral';
     }
   },
 
   declareWar(targetId) {
     const tid = String(targetId);
     const player = this.countries[this.playerCountryId];
-    player.allies = player.allies.filter(id => id !== tid);
+    player.allies  = player.allies.filter(id => id !== tid);
     player.enemies = [...new Set([...player.enemies, tid])];
     const target = this.countries[tid];
     if (target) {
-      target.allies = target.allies.filter(id => id !== this.playerCountryId);
+      target.allies  = target.allies.filter(id => id !== this.playerCountryId);
       target.enemies = [...new Set([...target.enemies, this.playerCountryId])];
       Notifications.show(`War declared on <b>${target.name}</b>! Mobilize your forces.`, 'war', 7000);
     }
@@ -166,11 +203,11 @@ const GameState = {
     const tid = String(targetId);
     const player = this.countries[this.playerCountryId];
     player.enemies = player.enemies.filter(id => id !== tid);
-    player.allies = [...new Set([...player.allies, tid])];
+    player.allies  = [...new Set([...player.allies, tid])];
     const target = this.countries[tid];
     if (target) {
       target.enemies = target.enemies.filter(id => id !== this.playerCountryId);
-      target.allies = [...new Set([...target.allies, this.playerCountryId])];
+      target.allies  = [...new Set([...target.allies, this.playerCountryId])];
       Notifications.show(`Alliance formed with <b>${target.name}</b>.`, 'alliance', 6000);
     }
     this.updateRelations();
@@ -188,15 +225,52 @@ const GameState = {
     this.updateRelations();
   },
 
+  setPlayerBudget(field, value) {
+    if (!this.playerCountryId) return;
+    this.countries[this.playerCountryId].budget[field] = value;
+  },
+
+  // Returns quarterly income breakdown for a country
+  calcBudget(id) {
+    const c = this.countries[String(id)];
+    if (!c) return null;
+    const b           = c.budget;
+    const revenue     = c.gdp * b.taxRate / 4;
+    const milSpend    = revenue * b.militaryAlloc;
+    const devSpend    = revenue * b.devAlloc;
+    const toTreasury  = revenue - milSpend - devSpend;
+    return { revenue, milSpend, devSpend, toTreasury };
+  },
+
   tickUpdate() {
     this.quarter++;
     if (this.quarter > 4) { this.quarter = 1; this.year++; }
 
-    for (const country of Object.values(this.countries)) {
-      const revenue = country.gdp * 0.20 / 4;
-      const expense = country.military * 0.008 / 4;
-      country.treasury += revenue - expense;
-      country.gdp *= 1.0008;
+    for (const [id, country] of Object.entries(this.countries)) {
+      const b          = country.budget;
+      const revenue    = country.gdp * b.taxRate / 4;
+      const milSpend   = revenue * b.militaryAlloc;
+      const devSpend   = revenue * b.devAlloc;
+      country.treasury += revenue - milSpend - devSpend;
+
+      // Military: maintenance vs. spending
+      const maintenance = country.military * 0.0012; // quarterly upkeep in $B
+      const milSurplus  = milSpend - maintenance;
+      if (milSurplus > 0) {
+        country.military += milSurplus / 12; // $12B per 1K new troops
+      } else {
+        country.military = Math.max(1, country.military + milSurplus * 2);
+      }
+
+      // GDP growth: base + dev boost + resource bonus - war penalty
+      const res         = country.resources;
+      const resBonus    = (res.oil + res.food + res.industry) / 250000;
+      const devBoost    = b.devAlloc * b.taxRate * 0.04;
+      const warPenalty  = id === this.playerCountryId
+        ? country.enemies.length * 0.0025
+        : 0;
+      const growth      = Math.max(0.0005, 0.0015 + devBoost + resBonus - warPenalty);
+      country.gdp      *= 1 + growth;
     }
   },
 };

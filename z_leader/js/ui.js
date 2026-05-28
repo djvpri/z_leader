@@ -58,20 +58,43 @@ const UI = {
         this.showCountryPanel(id);
       }
     });
+
+    // Budget sliders
+    document.getElementById('sld-tax').addEventListener('input', (e) => {
+      const v = Number(e.target.value) / 100;
+      GameState.setPlayerBudget('taxRate', v);
+      document.getElementById('lbl-tax').textContent = e.target.value + '%';
+      this._updateBudgetSummary();
+    });
+
+    document.getElementById('sld-mil').addEventListener('input', (e) => {
+      const v = Number(e.target.value) / 100;
+      GameState.setPlayerBudget('militaryAlloc', v);
+      document.getElementById('lbl-mil').textContent = e.target.value + '%';
+      this._updateBudgetSummary();
+    });
+
+    document.getElementById('sld-dev').addEventListener('input', (e) => {
+      const v = Number(e.target.value) / 100;
+      GameState.setPlayerBudget('devAlloc', v);
+      document.getElementById('lbl-dev').textContent = e.target.value + '%';
+      this._updateBudgetSummary();
+    });
   },
 
   showCountryPanel(id) {
     const sid = String(id);
-    const c = GameState.getCountry(sid);
+    const c   = GameState.getCountry(sid);
 
-    document.getElementById('panel-empty').style.display = 'none';
+    document.getElementById('panel-empty').style.display   = 'none';
     document.getElementById('panel-country').style.display = 'block';
 
     if (!c) {
       document.getElementById('panel-country-name').textContent = 'Unknown Territory';
       ['panel-gdp','panel-population','panel-military','panel-treasury','panel-status']
         .forEach(el => { document.getElementById(el).textContent = 'N/A'; });
-      document.getElementById('panel-actions').style.display = 'none';
+      document.getElementById('panel-actions').style.display   = 'none';
+      document.getElementById('panel-budget').style.display    = 'none';
       document.getElementById('panel-relations').style.display = 'none';
       return;
     }
@@ -86,23 +109,75 @@ const UI = {
     const statusMap = { player: 'You', ally: 'Ally', enemy: 'Enemy', neutral: 'Neutral' };
     document.getElementById('panel-status').textContent = statusMap[c.relation] || 'Neutral';
 
-    // Relations section — only for player's own country
+    // Resources — shown for all countries
+    this._renderResources(c);
+
     const isPlayer = sid === GameState.playerCountryId;
-    if (isPlayer && GameState.playerCountryId) {
+    const hasPlayer = Boolean(GameState.playerCountryId);
+    const isEnemy   = c.relation === 'enemy';
+    const isAlly    = c.relation === 'ally';
+
+    // Budget — only for player's own country
+    if (isPlayer) {
+      this._renderBudgetSliders(c);
+      this._updateBudgetSummary();
+      document.getElementById('panel-budget').style.display = 'block';
+    } else {
+      document.getElementById('panel-budget').style.display = 'none';
+    }
+
+    // Relations — only for player's own country
+    if (isPlayer) {
       this._renderRelations(c);
       document.getElementById('panel-relations').style.display = 'block';
     } else {
       document.getElementById('panel-relations').style.display = 'none';
     }
 
-    const hasPlayer = Boolean(GameState.playerCountryId);
-    const isEnemy   = c.relation === 'enemy';
-    const isAlly    = c.relation === 'ally';
-
     document.getElementById('btn-play-as').style.display          = hasPlayer ? 'none' : 'block';
     document.getElementById('btn-declare-war').style.display      = (hasPlayer && !isPlayer && !isEnemy) ? 'block' : 'none';
     document.getElementById('btn-propose-alliance').style.display = (hasPlayer && !isPlayer && !isAlly) ? 'block' : 'none';
     document.getElementById('btn-make-peace').style.display       = (hasPlayer && !isPlayer && isEnemy) ? 'block' : 'none';
+  },
+
+  _renderResources(c) {
+    const res = c.resources || { oil: 0, food: 0, industry: 0 };
+    document.getElementById('rbar-oil').style.width  = res.oil  + '%';
+    document.getElementById('rbar-food').style.width = res.food + '%';
+    document.getElementById('rbar-ind').style.width  = res.industry + '%';
+    document.getElementById('rval-oil').textContent  = res.oil;
+    document.getElementById('rval-food').textContent = res.food;
+    document.getElementById('rval-ind').textContent  = res.industry;
+  },
+
+  _renderBudgetSliders(c) {
+    const b = c.budget;
+    const taxPct = Math.round(b.taxRate * 100);
+    const milPct = Math.round(b.militaryAlloc * 100);
+    const devPct = Math.round(b.devAlloc * 100);
+
+    document.getElementById('sld-tax').value = taxPct;
+    document.getElementById('sld-mil').value = milPct;
+    document.getElementById('sld-dev').value = devPct;
+    document.getElementById('lbl-tax').textContent = taxPct + '%';
+    document.getElementById('lbl-mil').textContent = milPct + '%';
+    document.getElementById('lbl-dev').textContent = devPct + '%';
+  },
+
+  _updateBudgetSummary() {
+    if (!GameState.playerCountryId) return;
+    const b = GameState.calcBudget(GameState.playerCountryId);
+    if (!b) return;
+
+    const fmt = v => `$${Math.abs(v).toFixed(1)}B`;
+
+    document.getElementById('b-revenue').textContent = '+' + fmt(b.revenue);
+    document.getElementById('b-mil').textContent     = '-' + fmt(b.milSpend);
+    document.getElementById('b-dev').textContent     = '-' + fmt(b.devSpend);
+
+    const netEl = document.getElementById('b-net');
+    netEl.textContent = (b.toTreasury >= 0 ? '+' : '') + fmt(b.toTreasury);
+    netEl.className   = b.toTreasury >= 0 ? 'pos' : 'neg';
   },
 
   _renderRelations(playerCountry) {
@@ -116,16 +191,14 @@ const UI = {
       ? '<span style="color:#334155;font-size:11px">None</span>'
       : playerCountry.allies.map(aid => {
           const a = GameState.getCountry(aid);
-          const name = a ? a.name : `#${aid}`;
-          return `<span class="rel-tag" title="${name}">${name}</span>`;
+          return `<span class="rel-tag">${a ? a.name : '#' + aid}</span>`;
         }).join('');
 
     enemiesList.innerHTML = playerCountry.enemies.length === 0
       ? '<span style="color:#334155;font-size:11px">None</span>'
       : playerCountry.enemies.map(eid => {
           const e = GameState.getCountry(eid);
-          const name = e ? e.name : `#${eid}`;
-          return `<span class="rel-tag enemy" title="${name}">${name}</span>`;
+          return `<span class="rel-tag enemy">${e ? e.name : '#' + eid}</span>`;
         }).join('');
   },
 
@@ -138,6 +211,7 @@ const UI = {
     if (!GameState.playerCountryId) return;
     const p = GameState.getCountry(GameState.playerCountryId);
     if (!p) return;
+
     document.getElementById('player-country-name').textContent = p.name;
     document.getElementById('treasury').textContent   = p.treasury.toFixed(0);
     document.getElementById('gdp').textContent        = p.gdp.toFixed(0);
@@ -145,8 +219,12 @@ const UI = {
     document.getElementById('military').textContent   = p.military.toFixed(0);
     document.getElementById('game-date').textContent  = `Year ${GameState.year} Q${GameState.quarter}`;
 
-    // Refresh relations if player's country is open
+    // Refresh panel if viewing player's own country
     if (GameState.selectedCountryId === GameState.playerCountryId) {
+      document.getElementById('panel-gdp').textContent      = `$${p.gdp.toFixed(0)}B/yr`;
+      document.getElementById('panel-treasury').textContent = `$${p.treasury.toFixed(0)}B`;
+      document.getElementById('panel-military').textContent = `${p.military.toFixed(0)}K`;
+      this._updateBudgetSummary();
       this._renderRelations(p);
     }
   },
