@@ -163,6 +163,8 @@ const GameState = {
   unlockedTechs:    new Set(),
   currentResearch:  null,
   researchProgress: 0,
+  commodityPrices: { oil: 1.0, food: 1.0, industry: 1.0 },
+  priceHistory:    { oil: [1.0], food: [1.0], industry: [1.0] },
 
   init() {
     for (const [id, data] of Object.entries(COUNTRY_DATA)) {
@@ -484,10 +486,42 @@ const GameState = {
     const result     = { oil: 0, food: 0, industry: 0, total: 0 };
     for (const [key, rate] of Object.entries(rates)) {
       const surplus = (c.resources[key] - BASE) / 100;
-      result[key]   = c.gdp * surplus * rate * (surplus >= 0 ? exportMult : 1.2);
+      const price   = this.commodityPrices[key] || 1;
+      result[key]   = c.gdp * surplus * rate * price * (surplus >= 0 ? exportMult : 1.2);
       result.total += result[key];
     }
     return result;
+  },
+
+  _tickCommodityPrices() {
+    const BASE = 40;
+    for (const com of ['oil', 'food', 'industry']) {
+      // Aggregate world net surplus for this commodity
+      let netSurplus = 0, n = 0;
+      for (const c of Object.values(this.countries)) {
+        if (c.occupiedBy) continue;
+        netSurplus += (c.resources[com] - BASE) / 100;
+        n++;
+      }
+      const supplyPressure = -(netSurplus / (n || 1)) * 0.12;
+      const noise          = (Math.random() - 0.5) * 0.04;
+      const meanReversion  = (1.0 - this.commodityPrices[com]) * 0.05;
+      const delta          = supplyPressure + noise + meanReversion;
+
+      this.commodityPrices[com] = Math.max(0.35, Math.min(2.5,
+        this.commodityPrices[com] * (1 + delta)
+      ));
+
+      const hist = this.priceHistory[com];
+      hist.push(+this.commodityPrices[com].toFixed(3));
+      if (hist.length > 16) hist.shift();
+    }
+  },
+
+  commodityShock(com, direction) {
+    const magnitude = 0.10 + Math.random() * 0.15;
+    const p = this.commodityPrices[com];
+    this.commodityPrices[com] = Math.max(0.35, Math.min(2.5, p * (1 + direction * magnitude)));
   },
 
   checkVictory() {
@@ -523,7 +557,9 @@ const GameState = {
         unlockedTechs:   [...this.unlockedTechs],
         currentResearch:  this.currentResearch,
         researchProgress: this.researchProgress,
-        countries:       JSON.parse(JSON.stringify(this.countries)),
+        countries:        JSON.parse(JSON.stringify(this.countries)),
+        commodityPrices:  { ...this.commodityPrices },
+        priceHistory:     JSON.parse(JSON.stringify(this.priceHistory)),
       }));
       return true;
     } catch(e) { return false; }
@@ -542,6 +578,8 @@ const GameState = {
       this.unlockedTechs    = new Set(s.unlockedTechs);
       this.currentResearch  = s.currentResearch;
       this.researchProgress = s.researchProgress;
+      this.commodityPrices  = s.commodityPrices  || { oil: 1.0, food: 1.0, industry: 1.0 };
+      this.priceHistory     = s.priceHistory     || { oil: [1.0], food: [1.0], industry: [1.0] };
       this.paused           = false;
       this.attackReady      = true;
       if (this.playerCountryId) this.updateRelations();
@@ -608,5 +646,7 @@ const GameState = {
         country.treasury *= 1.005;
       }
     }
+
+    this._tickCommodityPrices();
   },
 };

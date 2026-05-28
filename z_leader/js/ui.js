@@ -461,6 +461,7 @@ const UI = {
   hidePanelCountry() {
     document.getElementById('panel-empty').style.display   = 'block';
     document.getElementById('panel-country').style.display = 'none';
+    this._renderCommodityMarket();
     this._renderLeaderboard();
     this._renderTradeRankings(_tradeCom);
   },
@@ -502,6 +503,50 @@ const UI = {
       `<span class="lb-val">${r.str.toLocaleString()}</span>` +
       `</div>`
     ).join('');
+  },
+
+  _sparkline(history, color) {
+    if (history.length < 2) return '';
+    const W = 56, H = 20;
+    const min = Math.min(...history);
+    const max = Math.max(...history);
+    const rng = (max - min) || 0.01;
+    const pts = history.map((v, i) => {
+      const x = (i / (history.length - 1)) * W;
+      const y = H - ((v - min) / rng) * (H - 2) - 1;
+      return x.toFixed(1) + ',' + y.toFixed(1);
+    }).join(' ');
+    return `<svg width="${W}" height="${H}" style="overflow:visible;display:block">` +
+      `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>` +
+      `<circle cx="${(history.length - 1) / (history.length - 1) * W}" cy="${H - ((history[history.length - 1] - min) / rng) * (H - 2) - 1}" r="2" fill="${color}"/>` +
+      `</svg>`;
+  },
+
+  _renderCommodityMarket() {
+    const COM_CFG = [
+      { key: 'oil',      sparkId: 'cm-spark-oil',  trendId: 'cm-trend-oil',  priceId: 'cm-price-oil'  },
+      { key: 'food',     sparkId: 'cm-spark-food', trendId: 'cm-trend-food', priceId: 'cm-price-food' },
+      { key: 'industry', sparkId: 'cm-spark-ind',  trendId: 'cm-trend-ind',  priceId: 'cm-price-ind'  },
+    ];
+    for (const cfg of COM_CFG) {
+      const price   = GameState.commodityPrices[cfg.key];
+      const history = GameState.priceHistory[cfg.key];
+      const prev    = history.length >= 2 ? history[history.length - 2] : price;
+
+      const cls      = price > 1.08 ? 'up' : price < 0.92 ? 'down' : 'flat';
+      const trendChr = price > prev * 1.003 ? '▲' : price < prev * 0.997 ? '▼' : '→';
+      const trendCls = price > prev * 1.003 ? 'up' : price < prev * 0.997 ? 'down' : 'flat';
+      const color    = cls === 'up' ? '#4ade80' : cls === 'down' ? '#f87171' : '#475569';
+
+      const sparkEl = document.getElementById(cfg.sparkId);
+      if (sparkEl) sparkEl.innerHTML = this._sparkline(history, color);
+
+      const trendEl = document.getElementById(cfg.trendId);
+      if (trendEl) { trendEl.textContent = trendChr; trendEl.className = 'cm-trend ' + trendCls; }
+
+      const priceEl = document.getElementById(cfg.priceId);
+      if (priceEl) { priceEl.textContent = price.toFixed(2) + '×'; priceEl.className = 'cm-price ' + cls; }
+    }
   },
 
   _renderTradeRankings(commodity) {
@@ -570,8 +615,9 @@ const UI = {
       document.getElementById('btn-attack').disabled = false;
     }
 
-    // Update leaderboard + trade rankings when no country panel open
+    // Update overview panels when no country panel open
     if (!GameState.selectedCountryId) {
+      this._renderCommodityMarket();
       this._renderLeaderboard();
       this._renderTradeRankings(_tradeCom);
     }

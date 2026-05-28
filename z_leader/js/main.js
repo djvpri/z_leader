@@ -87,26 +87,39 @@ function _checkEvents() {
 }
 
 const WORLD_EVENTS = [
-  { msg: 'Global commodity prices surge — resource-rich nations benefit.',  type: 'event'     },
-  { msg: 'International trade summit convenes. Diplomatic ties strengthen.', type: 'event'     },
-  { msg: 'Regional tensions rising in Southeast Asia.',                      type: 'event'     },
-  { msg: 'New military technology deployed by major powers.',               type: 'event'     },
-  { msg: 'Economic slowdown detected in emerging markets.',                 type: 'warning'   },
-  { msg: 'Energy prices spike globally due to supply disruptions.',         type: 'warning'   },
-  { msg: 'UN resolution passes calling for international cooperation.',     type: 'info'      },
-  { msg: 'Ceasefire brokered between two regional powers.',                type: 'peace'     },
-  { msg: 'Coup attempt reported in an unstable nation.',                    type: 'event'     },
-  { msg: 'Record harvest season boosts agricultural economies.',            type: 'milestone' },
-  { msg: 'Diplomatic crisis as two nations recall their ambassadors.',      type: 'warning'   },
-  { msg: 'New trade route established, boosting regional GDP.',             type: 'milestone' },
-  { msg: 'Cyber attacks disrupt government systems in multiple countries.', type: 'danger'    },
-  { msg: 'Major earthquake strikes a densely populated region.',            type: 'event'     },
-  { msg: 'Oil reserves discovered — regional power balance may shift.',     type: 'event'     },
+  { msg: 'Global commodity prices surge — resource-rich nations benefit.',    type: 'event',
+    shock: [{ com: 'oil', dir: +1 }, { com: 'industry', dir: +1 }] },
+  { msg: 'International trade summit convenes. Diplomatic ties strengthen.',  type: 'event'   },
+  { msg: 'Regional tensions rising in Southeast Asia.',                       type: 'event'   },
+  { msg: 'New military technology deployed by major powers.',                 type: 'event'   },
+  { msg: 'Economic slowdown — commodity demand falls across the board.',      type: 'warning',
+    shock: [{ com: 'oil', dir: -1 }, { com: 'food', dir: -1 }, { com: 'industry', dir: -1 }] },
+  { msg: 'Energy prices spike globally due to supply disruptions.',           type: 'warning',
+    shock: [{ com: 'oil', dir: +1 }] },
+  { msg: 'UN resolution passes calling for international cooperation.',       type: 'info'    },
+  { msg: 'Ceasefire brokered between two regional powers.',                   type: 'peace'   },
+  { msg: 'Coup attempt reported in an unstable nation.',                      type: 'event'   },
+  { msg: 'Record harvest season — food prices fall as supply floods markets.',type: 'milestone',
+    shock: [{ com: 'food', dir: -1 }] },
+  { msg: 'Diplomatic crisis as two nations recall their ambassadors.',        type: 'warning' },
+  { msg: 'New trade route established, boosting industrial demand.',          type: 'milestone',
+    shock: [{ com: 'industry', dir: +1 }] },
+  { msg: 'Cyber attacks disrupt supply chains — industrial output hit.',      type: 'danger',
+    shock: [{ com: 'industry', dir: -1 }] },
+  { msg: 'Major earthquake disrupts agricultural output.',                    type: 'event',
+    shock: [{ com: 'food', dir: +1 }] },
+  { msg: 'New oil reserves discovered — market prices under pressure.',       type: 'event',
+    shock: [{ com: 'oil', dir: -1 }] },
+  { msg: 'Food crisis emerging — prices rise amid shortages.',                type: 'warning',
+    shock: [{ com: 'food', dir: +1 }] },
+  { msg: 'Global manufacturing boom lifts industrial commodity prices.',      type: 'milestone',
+    shock: [{ com: 'industry', dir: +1 }] },
 ];
 
 function _randomWorldEvent() {
   const ev = WORLD_EVENTS[Math.floor(Math.random() * WORLD_EVENTS.length)];
   Notifications.show(ev.msg, ev.type, 6000);
+  if (ev.shock) ev.shock.forEach(s => GameState.commodityShock(s.com, s.dir));
 }
 
 // ── Entry point ───────────────────────────────────────────────
