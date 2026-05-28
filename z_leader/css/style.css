@@ -610,6 +610,16 @@ button:disabled { opacity: 0.4; cursor: default; }
 .cm-price.down, .cm-trend.down { color: #f87171; }
 .cm-price.flat, .cm-trend.flat { color: #475569; }
 
+.cm-sd {
+  font-size: 0.67rem; color: #4b5e72;
+  padding: 1px 4px 5px; letter-spacing: 0.01em;
+}
+.cm-sd b  { color: #7a8fa0; }
+.sd-glut  { color: #4ade80; font-weight: 700; }
+.sd-short { color: #f87171; font-weight: 700; }
+.sd-bal   { color: #94a3b8; }
+.sd-vol   { color: #334155; margin-left: 4px; }
+
 /* ── Trade Rankings ── */
 #trade-rankings { margin-top: 4px; }
 

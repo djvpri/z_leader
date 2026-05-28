@@ -307,6 +307,7 @@ const GameState = {
   researchProgress: 0,
   commodityPrices: { oil: 1.0, food: 1.0, industry: 1.0, minerals: 1.0, tech: 1.0 },
   priceHistory:    { oil: [1.0], food: [1.0], industry: [1.0], minerals: [1.0], tech: [1.0] },
+  _tradeStats:     {},
 
   init() {
     for (const [id, data] of Object.entries(COUNTRY_DATA)) {
@@ -637,34 +638,61 @@ const GameState = {
     for (const [key, rate] of Object.entries(rates)) {
       const surplus = ((c.resources[key] || 0) - BASE) / 100;
       const price   = this.commodityPrices[key] || 1;
-      result[key]   = c.gdp * surplus * rate * price * (surplus >= 0 ? exportMult : 1.2);
+      let mult;
+      if (surplus >= 0) {
+        // Exporters: seller's market bonus when supply is scarce
+        mult = exportMult * (price > 1.3 ? 1.15 : 1.0);
+      } else {
+        // Importers: cheaper with a supplier trade partner; scarcity premium without one
+        const hasSupplier = c.tradePartners.some(tid => {
+          const partner = this.countries[tid];
+          return partner && (partner.resources[key] || 0) > BASE + 20;
+        });
+        mult = hasSupplier ? 0.85 : (price > 1.3 ? 1.6 : 1.2);
+      }
+      result[key]   = c.gdp * surplus * rate * price * mult;
       result.total += result[key];
     }
     return result;
   },
 
-  _tickCommodityPrices() {
+  _tickCommodityMarket() {
     const BASE = 40;
     for (const com of ['oil', 'food', 'industry', 'minerals', 'tech']) {
-      // Aggregate world net surplus for this commodity
-      let netSurplus = 0, n = 0;
+      let totalSupply = 0;
+      let totalDemand = 0;
       for (const c of Object.values(this.countries)) {
         if (c.occupiedBy) continue;
-        netSurplus += ((c.resources[com] || 0) - BASE) / 100;
-        n++;
+        const net = (c.resources[com] || 0) - BASE;
+        if (net > 0) {
+          totalSupply += net;
+        } else if (net < 0) {
+          // GDP-weighted demand: wealthier nations bid more aggressively on world markets
+          totalDemand += Math.abs(net) * Math.sqrt(c.gdp / 500 + 1);
+        }
       }
-      const supplyPressure = -(netSurplus / (n || 1)) * 0.12;
-      const noise          = (Math.random() - 0.5) * 0.04;
-      const meanReversion  = (1.0 - this.commodityPrices[com]) * 0.05;
-      const delta          = supplyPressure + noise + meanReversion;
+
+      // Supply/demand ratio drives price via log curve (1.0 = balanced, <1 = shortage, >1 = glut)
+      const sdRatio        = totalDemand > 0 ? totalSupply / totalDemand : 1;
+      const marketPressure = -Math.log(Math.max(0.1, Math.min(10, sdRatio))) * 0.06;
+      const noise          = (Math.random() - 0.5) * 0.025;
+      // Weak mean reversion — let market forces dominate
+      const meanReversion  = (1.0 - this.commodityPrices[com]) * 0.02;
 
       this.commodityPrices[com] = Math.max(0.35, Math.min(2.5,
-        this.commodityPrices[com] * (1 + delta)
+        this.commodityPrices[com] * (1 + marketPressure + noise + meanReversion)
       ));
 
       const hist = this.priceHistory[com];
       hist.push(+this.commodityPrices[com].toFixed(3));
       if (hist.length > 16) hist.shift();
+
+      this._tradeStats[com] = {
+        supply: Math.round(totalSupply),
+        demand: Math.round(totalDemand),
+        ratio:  +sdRatio.toFixed(2),
+        volume: Math.round(Math.min(totalSupply, totalDemand)),
+      };
     }
   },
 
@@ -874,6 +902,6 @@ const GameState = {
       }
     }
 
-    this._tickCommodityPrices();
+    this._tickCommodityMarket();
   },
 };

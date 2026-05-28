@@ -616,11 +616,11 @@ const UI = {
 
   _renderCommodityMarket() {
     const COM_CFG = [
-      { key: 'oil',      sparkId: 'cm-spark-oil',  trendId: 'cm-trend-oil',  priceId: 'cm-price-oil'  },
-      { key: 'food',     sparkId: 'cm-spark-food', trendId: 'cm-trend-food', priceId: 'cm-price-food' },
-      { key: 'industry', sparkId: 'cm-spark-ind',  trendId: 'cm-trend-ind',  priceId: 'cm-price-ind'  },
-      { key: 'minerals', sparkId: 'cm-spark-min',  trendId: 'cm-trend-min',  priceId: 'cm-price-min'  },
-      { key: 'tech',     sparkId: 'cm-spark-tech', trendId: 'cm-trend-tech', priceId: 'cm-price-tech' },
+      { key: 'oil',      sparkId: 'cm-spark-oil',  trendId: 'cm-trend-oil',  priceId: 'cm-price-oil',  sdId: 'cm-sd-oil'  },
+      { key: 'food',     sparkId: 'cm-spark-food', trendId: 'cm-trend-food', priceId: 'cm-price-food', sdId: 'cm-sd-food' },
+      { key: 'industry', sparkId: 'cm-spark-ind',  trendId: 'cm-trend-ind',  priceId: 'cm-price-ind',  sdId: 'cm-sd-ind'  },
+      { key: 'minerals', sparkId: 'cm-spark-min',  trendId: 'cm-trend-min',  priceId: 'cm-price-min',  sdId: 'cm-sd-min'  },
+      { key: 'tech',     sparkId: 'cm-spark-tech', trendId: 'cm-trend-tech', priceId: 'cm-price-tech', sdId: 'cm-sd-tech' },
     ];
     for (const cfg of COM_CFG) {
       const price   = GameState.commodityPrices[cfg.key];
@@ -640,6 +640,19 @@ const UI = {
 
       const priceEl = document.getElementById(cfg.priceId);
       if (priceEl) { priceEl.textContent = price.toFixed(2) + '×'; priceEl.className = 'cm-price ' + cls; }
+
+      // Supply / demand stats
+      const stats = (GameState._tradeStats || {})[cfg.key];
+      const sdEl  = document.getElementById(cfg.sdId);
+      if (sdEl && stats) {
+        const r = stats.ratio;
+        const statusLabel = r > 1.15 ? 'Oversupply' : r < 0.87 ? 'Shortage' : 'Balanced';
+        const statusCls   = r > 1.15 ? 'sd-glut'    : r < 0.87 ? 'sd-short'  : 'sd-bal';
+        sdEl.innerHTML =
+          `S:<b>${stats.supply}</b> D:<b>${stats.demand}</b>` +
+          ` — <span class="${statusCls}">${statusLabel}</span>` +
+          ` <span class="sd-vol">Vol:${stats.volume}</span>`;
+      }
     }
   },
 
