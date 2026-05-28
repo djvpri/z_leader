@@ -291,7 +291,8 @@ const GameState = {
           fighters:  Math.round(m * 0.07),
         },
         occupiedBy: null,
-        leader: { ...(PRESIDENT_DATA[id] || { title: 'President', name: 'Unknown', trait: 'nationalist' }) },
+        leader:     { ...(PRESIDENT_DATA[id] || { title: 'President', name: 'Unknown', trait: 'nationalist' }) },
+        factories:  { oil: 0, food: 0, industry: 0 },
       };
     }
   },
@@ -637,6 +638,30 @@ const GameState = {
     this.commodityPrices[com] = Math.max(0.35, Math.min(2.5, p * (1 + direction * magnitude)));
   },
 
+  buildCost(commodity) {
+    if (!this.playerCountryId) return Infinity;
+    const p = this.countries[this.playerCountryId];
+    if (!p) return Infinity;
+    const n = (p.factories || {})[commodity] || 0;
+    if (n >= 5) return Infinity;
+    return 30 * (n + 1);
+  },
+
+  buildFactory(commodity) {
+    if (!this.playerCountryId) return false;
+    const p = this.countries[this.playerCountryId];
+    if (!p) return false;
+    if (!p.factories) p.factories = { oil: 0, food: 0, industry: 0 };
+    const n = p.factories[commodity] || 0;
+    if (n >= 5) return false;
+    const cost = 30 * (n + 1);
+    if (p.treasury < cost) return false;
+    p.treasury -= cost;
+    p.factories[commodity]++;
+    p.resources[commodity] += 20;
+    return true;
+  },
+
   checkVictory() {
     if (!this.playerCountryId) return null;
     const player = this.countries[this.playerCountryId];
@@ -761,6 +786,25 @@ const GameState = {
 
       if (isPlayer && this.unlockedTechs.has('banking') && country.treasury > 0) {
         country.treasury *= 1.005;
+      }
+
+      // AI factory building: invest in most-deficient commodity when flush
+      if (!isPlayer && !country.occupiedBy && country.treasury > 200 && Math.random() < 0.08) {
+        if (!country.factories) country.factories = { oil: 0, food: 0, industry: 0 };
+        let target = null, lowest = Infinity;
+        for (const com of ['oil', 'food', 'industry']) {
+          if ((country.factories[com] || 0) >= 5) continue;
+          if (country.resources[com] < lowest) { lowest = country.resources[com]; target = com; }
+        }
+        if (target) {
+          const n    = country.factories[target] || 0;
+          const cost = 30 * (n + 1);
+          if (country.treasury >= cost) {
+            country.treasury -= cost;
+            country.factories[target]++;
+            country.resources[target] += 20;
+          }
+        }
       }
     }
 

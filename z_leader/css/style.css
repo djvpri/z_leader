@@ -421,6 +421,47 @@ input[type=range]::-webkit-slider-thumb:hover { background: #93c5fd; }
 .recruit-btn:hover    { background: #14532d; }
 .recruit-btn:disabled { opacity: 0.4; cursor: default; }
 
+/* ── Infrastructure / Build ── */
+#panel-build { margin-bottom: 4px; }
+
+.build-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #1e3a4a;
+}
+.build-row:last-child { border-bottom: none; }
+
+.build-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+
+.build-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.build-name  { font-size: 12px; font-weight: 600; color: #e2e8f0; }
+
+.build-level { font-size: 10px; color: #64748b; }
+
+.build-btn {
+  padding: 5px 10px;
+  background: #1a3a1a;
+  border: 1px solid #2d6a2d;
+  color: #86efac;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.build-btn:hover    { background: #14532d; }
+.build-btn:disabled { opacity: 0.4; cursor: default; }
+
 /* ── Panel Actions ── */
 #panel-actions { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
 

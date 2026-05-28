@@ -182,6 +182,29 @@ const UI = {
       }
     });
 
+    // Build buttons
+    ['oil', 'food', 'industry'].forEach(com => {
+      const btn = document.getElementById('btn-build-' + com);
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        const ok = GameState.buildFactory(com);
+        if (!ok) {
+          Notifications.show('Cannot build — insufficient treasury or max level reached.', 'warning', 4000);
+          return;
+        }
+        const p = GameState.getCountry(GameState.playerCountryId);
+        if (p) {
+          this._renderBuild(GameState.playerCountryId, p);
+          this._renderResources(p);
+          this._renderTrade(GameState.playerCountryId, p);
+          this._updateBudgetSummary();
+          this.updateHUD();
+          const label = com === 'oil' ? 'Oil Refinery' : com === 'food' ? 'Agri Complex' : 'Industrial Zone';
+          Notifications.show(`${label} built! +20 ${com} production (now: ${Math.round(p.resources[com])}).`, 'milestone', 4000);
+        }
+      });
+    });
+
     // Recruit buttons (event delegation)
     document.getElementById('panel-recruit').addEventListener('click', (e) => {
       const btn = e.target.closest('.recruit-btn');
@@ -248,14 +271,17 @@ const UI = {
     const isEnemy   = c.relation === 'enemy';
     const isAlly    = c.relation === 'ally';
 
-    // Budget + Recruit — player only
+    // Budget + Build + Recruit — player only
     if (isPlayer) {
       this._renderBudgetSliders(c);
       this._updateBudgetSummary();
+      this._renderBuild(sid, c);
       document.getElementById('panel-budget').style.display  = 'block';
+      document.getElementById('panel-build').style.display   = 'block';
       document.getElementById('panel-recruit').style.display = 'block';
     } else {
       document.getElementById('panel-budget').style.display  = 'none';
+      document.getElementById('panel-build').style.display   = 'none';
       document.getElementById('panel-recruit').style.display = 'none';
     }
 
@@ -346,14 +372,34 @@ const UI = {
     }
   },
 
+  _renderBuild(id, c) {
+    const facs = c.factories || { oil: 0, food: 0, industry: 0 };
+    const MAX  = 5;
+    for (const com of ['oil', 'food', 'industry']) {
+      const n      = facs[com] || 0;
+      const lvlEl  = document.getElementById('bl-' + com);
+      const costEl = document.getElementById('bc-' + com);
+      const btnEl  = document.getElementById('btn-build-' + com);
+      if (!lvlEl || !costEl || !btnEl) continue;
+      lvlEl.textContent = `Lv ${n}/${MAX}`;
+      if (n >= MAX) {
+        btnEl.textContent = 'MAX LEVEL';
+        btnEl.disabled    = true;
+      } else {
+        costEl.textContent = 30 * (n + 1);
+        btnEl.disabled     = c.treasury < 30 * (n + 1);
+      }
+    }
+  },
+
   _renderResources(c) {
     const res = c.resources || { oil: 0, food: 0, industry: 0 };
-    document.getElementById('rbar-oil').style.width  = res.oil  + '%';
-    document.getElementById('rbar-food').style.width = res.food + '%';
-    document.getElementById('rbar-ind').style.width  = res.industry + '%';
-    document.getElementById('rval-oil').textContent  = res.oil;
-    document.getElementById('rval-food').textContent = res.food;
-    document.getElementById('rval-ind').textContent  = res.industry;
+    document.getElementById('rbar-oil').style.width  = Math.min(100, res.oil)      + '%';
+    document.getElementById('rbar-food').style.width = Math.min(100, res.food)     + '%';
+    document.getElementById('rbar-ind').style.width  = Math.min(100, res.industry) + '%';
+    document.getElementById('rval-oil').textContent  = Math.round(res.oil);
+    document.getElementById('rval-food').textContent = Math.round(res.food);
+    document.getElementById('rval-ind').textContent  = Math.round(res.industry);
   },
 
   _renderBudgetSliders(c) {
