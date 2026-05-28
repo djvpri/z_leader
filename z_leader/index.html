@@ -65,6 +65,20 @@
               <span id="cm-trend-ind" class="cm-trend flat">→</span>
               <span id="cm-price-ind" class="cm-price flat">1.00×</span>
             </div>
+            <div class="cm-row">
+              <span class="cm-icon">⛏️</span>
+              <span class="cm-name">Minerals</span>
+              <div id="cm-spark-min" class="cm-spark"></div>
+              <span id="cm-trend-min" class="cm-trend flat">→</span>
+              <span id="cm-price-min" class="cm-price flat">1.00×</span>
+            </div>
+            <div class="cm-row">
+              <span class="cm-icon">💻</span>
+              <span class="cm-name">Technology</span>
+              <div id="cm-spark-tech" class="cm-spark"></div>
+              <span id="cm-trend-tech" class="cm-trend flat">→</span>
+              <span id="cm-price-tech" class="cm-price flat">1.00×</span>
+            </div>
           </div>
 
           <div id="leaderboard">
@@ -78,6 +92,8 @@
               <button class="tr-tab tr-active" data-com="oil">🛢 Oil</button>
               <button class="tr-tab" data-com="food">🌾 Food</button>
               <button class="tr-tab" data-com="industry">⚙ Industry</button>
+              <button class="tr-tab" data-com="minerals">⛏️ Minerals</button>
+              <button class="tr-tab" data-com="tech">💻 Tech</button>
             </div>
             <div id="tr-list"></div>
           </div>
@@ -132,6 +148,16 @@
               <div class="res-bar"><div id="rbar-ind" class="res-fill res-ind"></div></div>
               <span id="rval-ind" class="res-num">0</span>
             </div>
+            <div class="res-row">
+              <span class="res-name">Minerals</span>
+              <div class="res-bar"><div id="rbar-min" class="res-fill res-min"></div></div>
+              <span id="rval-min" class="res-num">0</span>
+            </div>
+            <div class="res-row">
+              <span class="res-name">Tech</span>
+              <div class="res-bar"><div id="rbar-tech" class="res-fill res-tech"></div></div>
+              <span id="rval-tech" class="res-num">0</span>
+            </div>
           </div>
 
           <!-- Trade Balance (all countries) -->
@@ -154,6 +180,18 @@
               <span class="trade-name">Industry</span>
               <span id="trade-badge-ind" class="trade-badge export">EXPORT</span>
               <span id="trade-val-ind" class="trade-val pos">+$0.0B</span>
+            </div>
+            <div class="trade-row">
+              <span class="trade-icon">⛏️</span>
+              <span class="trade-name">Minerals</span>
+              <span id="trade-badge-min" class="trade-badge export">EXPORT</span>
+              <span id="trade-val-min" class="trade-val pos">+$0.0B</span>
+            </div>
+            <div class="trade-row">
+              <span class="trade-icon">💻</span>
+              <span class="trade-name">Tech</span>
+              <span id="trade-badge-tech" class="trade-badge export">EXPORT</span>
+              <span id="trade-val-tech" class="trade-val pos">+$0.0B</span>
             </div>
             <div class="trade-balance-row">
               <label>Net Trade</label>
@@ -212,6 +250,22 @@
                 <span class="build-level" id="bl-industry">Lv 0/5</span>
               </div>
               <button class="build-btn" id="btn-build-industry">Build $<span id="bc-industry">30</span>B</button>
+            </div>
+            <div class="build-row">
+              <span class="build-icon">⛏️</span>
+              <div class="build-info">
+                <span class="build-name">Mineral Mine</span>
+                <span class="build-level" id="bl-minerals">Lv 0/5</span>
+              </div>
+              <button class="build-btn" id="btn-build-minerals">Build $<span id="bc-minerals">30</span>B</button>
+            </div>
+            <div class="build-row">
+              <span class="build-icon">🖥️</span>
+              <div class="build-info">
+                <span class="build-name">Tech Hub</span>
+                <span class="build-level" id="bl-tech">Lv 0/5</span>
+              </div>
+              <button class="build-btn" id="btn-build-tech">Build $<span id="bc-tech">30</span>B</button>
             </div>
           </div>
 

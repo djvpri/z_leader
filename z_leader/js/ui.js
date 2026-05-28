@@ -183,7 +183,8 @@ const UI = {
     });
 
     // Build buttons
-    ['oil', 'food', 'industry'].forEach(com => {
+    const BUILD_LABELS = { oil: 'Oil Refinery', food: 'Agri Complex', industry: 'Industrial Zone', minerals: 'Mineral Mine', tech: 'Tech Hub' };
+    ['oil', 'food', 'industry', 'minerals', 'tech'].forEach(com => {
       const btn = document.getElementById('btn-build-' + com);
       if (!btn) return;
       btn.addEventListener('click', () => {
@@ -199,8 +200,7 @@ const UI = {
           this._renderTrade(GameState.playerCountryId, p);
           this._updateBudgetSummary();
           this.updateHUD();
-          const label = com === 'oil' ? 'Oil Refinery' : com === 'food' ? 'Agri Complex' : 'Industrial Zone';
-          Notifications.show(`${label} built! +20 ${com} production (now: ${Math.round(p.resources[com])}).`, 'milestone', 4000);
+          Notifications.show(`${BUILD_LABELS[com]} built! +20 ${com} production (now: ${Math.round(p.resources[com])}).`, 'milestone', 4000);
         }
       });
     });
@@ -375,7 +375,7 @@ const UI = {
   _renderBuild(id, c) {
     const facs = c.factories || { oil: 0, food: 0, industry: 0 };
     const MAX  = 5;
-    for (const com of ['oil', 'food', 'industry']) {
+    for (const com of ['oil', 'food', 'industry', 'minerals', 'tech']) {
       const n      = facs[com] || 0;
       const lvlEl  = document.getElementById('bl-' + com);
       const costEl = document.getElementById('bc-' + com);
@@ -393,13 +393,16 @@ const UI = {
   },
 
   _renderResources(c) {
-    const res = c.resources || { oil: 0, food: 0, industry: 0 };
-    document.getElementById('rbar-oil').style.width  = Math.min(100, res.oil)      + '%';
-    document.getElementById('rbar-food').style.width = Math.min(100, res.food)     + '%';
-    document.getElementById('rbar-ind').style.width  = Math.min(100, res.industry) + '%';
-    document.getElementById('rval-oil').textContent  = Math.round(res.oil);
-    document.getElementById('rval-food').textContent = Math.round(res.food);
-    document.getElementById('rval-ind').textContent  = Math.round(res.industry);
+    const res = c.resources || {};
+    const setRes = (barId, valId, v) => {
+      const el = document.getElementById(barId); if (el) el.style.width = Math.min(100, v || 0) + '%';
+      const vl = document.getElementById(valId); if (vl) vl.textContent = Math.round(v || 0);
+    };
+    setRes('rbar-oil',  'rval-oil',  res.oil);
+    setRes('rbar-food', 'rval-food', res.food);
+    setRes('rbar-ind',  'rval-ind',  res.industry);
+    setRes('rbar-min',  'rval-min',  res.minerals);
+    setRes('rbar-tech', 'rval-tech', res.tech);
   },
 
   _renderBudgetSliders(c) {
@@ -453,6 +456,8 @@ const UI = {
     setRow('trade-val-oil',  'trade-badge-oil',  tb.oil);
     setRow('trade-val-food', 'trade-badge-food', tb.food);
     setRow('trade-val-ind',  'trade-badge-ind',  tb.industry);
+    setRow('trade-val-min',  'trade-badge-min',  tb.minerals);
+    setRow('trade-val-tech', 'trade-badge-tech', tb.tech);
     const totalEl = document.getElementById('trade-total');
     if (totalEl) {
       totalEl.textContent = fmtV(tb.total);
@@ -614,6 +619,8 @@ const UI = {
       { key: 'oil',      sparkId: 'cm-spark-oil',  trendId: 'cm-trend-oil',  priceId: 'cm-price-oil'  },
       { key: 'food',     sparkId: 'cm-spark-food', trendId: 'cm-trend-food', priceId: 'cm-price-food' },
       { key: 'industry', sparkId: 'cm-spark-ind',  trendId: 'cm-trend-ind',  priceId: 'cm-price-ind'  },
+      { key: 'minerals', sparkId: 'cm-spark-min',  trendId: 'cm-trend-min',  priceId: 'cm-price-min'  },
+      { key: 'tech',     sparkId: 'cm-spark-tech', trendId: 'cm-trend-tech', priceId: 'cm-price-tech' },
     ];
     for (const cfg of COM_CFG) {
       const price   = GameState.commodityPrices[cfg.key];

@@ -97,27 +97,63 @@ const COUNTRY_DATA = {
 };
 
 const RESOURCE_DATA = {
-  12:  { oil: 55, food: 35, industry: 30 }, 32:  { oil: 25, food: 78, industry: 42 },
-  36:  { oil: 48, food: 72, industry: 58 }, 76:  { oil: 32, food: 82, industry: 52 },
-  124: { oil: 62, food: 76, industry: 68 }, 152: { oil: 20, food: 56, industry: 44 },
-  156: { oil: 42, food: 72, industry: 96 }, 170: { oil: 32, food: 56, industry: 36 },
-  276: { oil: 8,  food: 62, industry: 92 }, 356: { oil: 22, food: 68, industry: 72 },
-  360: { oil: 52, food: 68, industry: 62 }, 364: { oil: 82, food: 32, industry: 36 },
-  368: { oil: 88, food: 28, industry: 28 }, 392: { oil: 4,  food: 52, industry: 92 },
-  410: { oil: 4,  food: 58, industry: 82 }, 414: { oil: 96, food: 8,  industry: 32 },
-  484: { oil: 58, food: 52, industry: 58 }, 528: { oil: 18, food: 58, industry: 78 },
-  566: { oil: 68, food: 52, industry: 28 }, 578: { oil: 72, food: 46, industry: 58 },
-  586: { oil: 14, food: 52, industry: 36 }, 616: { oil: 12, food: 72, industry: 68 },
-  634: { oil: 92, food: 8,  industry: 32 }, 643: { oil: 92, food: 58, industry: 72 },
-  682: { oil: 96, food: 10, industry: 42 }, 710: { oil: 18, food: 58, industry: 48 },
-  724: { oil: 8,  food: 56, industry: 72 }, 752: { oil: 10, food: 52, industry: 78 },
-  764: { oil: 26, food: 72, industry: 58 }, 792: { oil: 22, food: 62, industry: 62 },
-  804: { oil: 16, food: 68, industry: 48 }, 784: { oil: 88, food: 8,  industry: 48 },
-  826: { oil: 32, food: 58, industry: 78 }, 840: { oil: 78, food: 92, industry: 96 },
-  862: { oil: 78, food: 52, industry: 28 }, 704: { oil: 16, food: 72, industry: 52 },
+  // oil exporters
+  364: { oil: 82, food: 32, industry: 36, minerals: 46, tech: 24 },  // Iran
+  368: { oil: 88, food: 28, industry: 28, minerals: 38, tech: 16 },  // Iraq
+  414: { oil: 96, food:  8, industry: 32, minerals: 36, tech: 28 },  // Kuwait
+  634: { oil: 92, food:  8, industry: 32, minerals: 30, tech: 32 },  // Qatar
+  682: { oil: 96, food: 10, industry: 42, minerals: 42, tech: 34 },  // Saudi Arabia
+  784: { oil: 88, food:  8, industry: 48, minerals: 34, tech: 54 },  // UAE
+  566: { oil: 68, food: 52, industry: 28, minerals: 42, tech: 16 },  // Nigeria
+  578: { oil: 72, food: 46, industry: 58, minerals: 48, tech: 58 },  // Norway
+  862: { oil: 78, food: 52, industry: 28, minerals: 58, tech: 16 },  // Venezuela
+  643: { oil: 92, food: 58, industry: 72, minerals: 70, tech: 52 },  // Russia
+  840: { oil: 78, food: 92, industry: 96, minerals: 56, tech: 96 },  // USA
+  124: { oil: 62, food: 76, industry: 68, minerals: 66, tech: 64 },  // Canada
+  // food powerhouses
+  76:  { oil: 32, food: 82, industry: 52, minerals: 66, tech: 32 },  // Brazil
+  32:  { oil: 25, food: 78, industry: 42, minerals: 62, tech: 28 },  // Argentina
+  // industrial / tech powers
+  156: { oil: 42, food: 72, industry: 96, minerals: 74, tech: 68 },  // China
+  276: { oil:  8, food: 62, industry: 92, minerals: 44, tech: 84 },  // Germany
+  392: { oil:  4, food: 52, industry: 92, minerals: 28, tech: 90 },  // Japan
+  410: { oil:  4, food: 58, industry: 82, minerals: 24, tech: 88 },  // South Korea
+  826: { oil: 32, food: 58, industry: 78, minerals: 38, tech: 76 },  // UK
+  528: { oil: 18, food: 58, industry: 78, minerals: 30, tech: 72 },  // Netherlands
+  752: { oil: 10, food: 52, industry: 78, minerals: 50, tech: 74 },  // Sweden
+  724: { oil:  8, food: 56, industry: 72, minerals: 38, tech: 54 },  // Spain
+  616: { oil: 12, food: 72, industry: 68, minerals: 52, tech: 56 },  // Poland
+  // minerals exporters (not previously in data)
+  152: { oil: 20, food: 56, industry: 44, minerals: 88, tech: 30 },  // Chile (copper/lithium)
+  36:  { oil: 48, food: 72, industry: 58, minerals: 80, tech: 60 },  // Australia (iron/coal)
+  710: { oil: 18, food: 58, industry: 48, minerals: 76, tech: 38 },  // South Africa (gold)
+  180: { oil: 18, food: 34, industry: 18, minerals: 82, tech: 10 },  // DRC (cobalt)
+  894: { oil:  8, food: 48, industry: 18, minerals: 80, tech: 12 },  // Zambia (copper)
+  604: { oil: 14, food: 52, industry: 32, minerals: 78, tech: 22 },  // Peru (copper/silver)
+  324: { oil: 14, food: 46, industry: 16, minerals: 76, tech: 10 },  // Guinea (bauxite)
+  68:  { oil: 14, food: 52, industry: 22, minerals: 72, tech: 14 },  // Bolivia (lithium)
+  398: { oil: 44, food: 46, industry: 38, minerals: 70, tech: 24 },  // Kazakhstan
+  516: { oil: 12, food: 36, industry: 22, minerals: 66, tech: 16 },  // Namibia (uranium)
+  // mixed
+  12:  { oil: 55, food: 35, industry: 30, minerals: 38, tech: 18 },  // Algeria
+  170: { oil: 32, food: 56, industry: 36, minerals: 48, tech: 22 },  // Colombia
+  356: { oil: 22, food: 68, industry: 72, minerals: 54, tech: 58 },  // India
+  360: { oil: 52, food: 68, industry: 62, minerals: 64, tech: 26 },  // Indonesia
+  484: { oil: 58, food: 52, industry: 58, minerals: 60, tech: 32 },  // Mexico
+  586: { oil: 14, food: 52, industry: 36, minerals: 46, tech: 22 },  // Pakistan
+  764: { oil: 26, food: 72, industry: 58, minerals: 42, tech: 36 },  // Thailand
+  792: { oil: 22, food: 62, industry: 62, minerals: 48, tech: 38 },  // Turkey
+  804: { oil: 16, food: 68, industry: 48, minerals: 60, tech: 36 },  // Ukraine
+  704: { oil: 16, food: 72, industry: 52, minerals: 46, tech: 30 },  // Vietnam
+  // tech hubs
+  376: { oil:  4, food: 28, industry: 52, minerals: 18, tech: 80 },  // Israel
+  246: { oil:  6, food: 56, industry: 52, minerals: 30, tech: 76 },  // Finland
+  756: { oil:  2, food: 52, industry: 68, minerals: 28, tech: 74 },  // Switzerland
+  372: { oil:  4, food: 52, industry: 48, minerals: 18, tech: 66 },  // Ireland
+  56:  { oil: 14, food: 52, industry: 68, minerals: 30, tech: 60 },  // Belgium
 };
 
-const DEFAULT_RESOURCES = { oil: 18, food: 42, industry: 28 };
+const DEFAULT_RESOURCES = { oil: 18, food: 42, industry: 28, minerals: 22, tech: 15 };
 const DEFAULT_BUDGET = { taxRate: 0.20, militaryAlloc: 0.30, devAlloc: 0.30 };
 
 const TECH_TREE = {
@@ -269,8 +305,8 @@ const GameState = {
   unlockedTechs:    new Set(),
   currentResearch:  null,
   researchProgress: 0,
-  commodityPrices: { oil: 1.0, food: 1.0, industry: 1.0 },
-  priceHistory:    { oil: [1.0], food: [1.0], industry: [1.0] },
+  commodityPrices: { oil: 1.0, food: 1.0, industry: 1.0, minerals: 1.0, tech: 1.0 },
+  priceHistory:    { oil: [1.0], food: [1.0], industry: [1.0], minerals: [1.0], tech: [1.0] },
 
   init() {
     for (const [id, data] of Object.entries(COUNTRY_DATA)) {
@@ -292,7 +328,7 @@ const GameState = {
         },
         occupiedBy: null,
         leader:     { ...(PRESIDENT_DATA[id] || { title: 'President', name: 'Unknown', trait: 'nationalist' }) },
-        factories:  { oil: 0, food: 0, industry: 0 },
+        factories:  { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 },
       };
     }
   },
@@ -596,10 +632,10 @@ const GameState = {
     const tradeMult  = (isPlayer && this.unlockedTechs.has('trade_networks')) ? 2 : 1;
     const dipMult    = (isPlayer && c.leader?.trait === 'diplomat') ? 1.25 : 1;
     const exportMult = (1 + c.tradePartners.length * 0.15 * tradeMult) * dipMult;
-    const rates      = { oil: 0.006, food: 0.004, industry: 0.005 };
-    const result     = { oil: 0, food: 0, industry: 0, total: 0 };
+    const rates      = { oil: 0.006, food: 0.004, industry: 0.005, minerals: 0.0055, tech: 0.007 };
+    const result     = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0, total: 0 };
     for (const [key, rate] of Object.entries(rates)) {
-      const surplus = (c.resources[key] - BASE) / 100;
+      const surplus = ((c.resources[key] || 0) - BASE) / 100;
       const price   = this.commodityPrices[key] || 1;
       result[key]   = c.gdp * surplus * rate * price * (surplus >= 0 ? exportMult : 1.2);
       result.total += result[key];
@@ -609,12 +645,12 @@ const GameState = {
 
   _tickCommodityPrices() {
     const BASE = 40;
-    for (const com of ['oil', 'food', 'industry']) {
+    for (const com of ['oil', 'food', 'industry', 'minerals', 'tech']) {
       // Aggregate world net surplus for this commodity
       let netSurplus = 0, n = 0;
       for (const c of Object.values(this.countries)) {
         if (c.occupiedBy) continue;
-        netSurplus += (c.resources[com] - BASE) / 100;
+        netSurplus += ((c.resources[com] || 0) - BASE) / 100;
         n++;
       }
       const supplyPressure = -(netSurplus / (n || 1)) * 0.12;
@@ -651,7 +687,7 @@ const GameState = {
     if (!this.playerCountryId) return false;
     const p = this.countries[this.playerCountryId];
     if (!p) return false;
-    if (!p.factories) p.factories = { oil: 0, food: 0, industry: 0 };
+    if (!p.factories) p.factories = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 };
     const n = p.factories[commodity] || 0;
     if (n >= 5) return false;
     const cost = 30 * (n + 1);
@@ -716,8 +752,17 @@ const GameState = {
       this.unlockedTechs    = new Set(s.unlockedTechs);
       this.currentResearch  = s.currentResearch;
       this.researchProgress = s.researchProgress;
-      this.commodityPrices  = s.commodityPrices  || { oil: 1.0, food: 1.0, industry: 1.0 };
-      this.priceHistory     = s.priceHistory     || { oil: [1.0], food: [1.0], industry: [1.0] };
+      const defPrices = { oil: 1.0, food: 1.0, industry: 1.0, minerals: 1.0, tech: 1.0 };
+      this.commodityPrices  = { ...defPrices, ...(s.commodityPrices || {}) };
+      const defHist = { oil: [1.0], food: [1.0], industry: [1.0], minerals: [1.0], tech: [1.0] };
+      this.priceHistory     = { ...defHist, ...(s.priceHistory || {}) };
+      // Patch old saves: add minerals/tech to country resources
+      for (const [id, c] of Object.entries(this.countries)) {
+        const rd = RESOURCE_DATA[id] || DEFAULT_RESOURCES;
+        if (c.resources.minerals === undefined) c.resources.minerals = rd.minerals || DEFAULT_RESOURCES.minerals;
+        if (c.resources.tech     === undefined) c.resources.tech     = rd.tech     || DEFAULT_RESOURCES.tech;
+        if (!c.factories) c.factories = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 };
+      }
       this.paused           = false;
       this.attackReady      = true;
       if (this.playerCountryId) this.updateRelations();
@@ -790,9 +835,9 @@ const GameState = {
 
       // AI factory building: invest in most-deficient commodity when flush
       if (!isPlayer && !country.occupiedBy && country.treasury > 200 && Math.random() < 0.08) {
-        if (!country.factories) country.factories = { oil: 0, food: 0, industry: 0 };
+        if (!country.factories) country.factories = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 };
         let target = null, lowest = Infinity;
-        for (const com of ['oil', 'food', 'industry']) {
+        for (const com of ['oil', 'food', 'industry', 'minerals', 'tech']) {
           if ((country.factories[com] || 0) >= 5) continue;
           if (country.resources[com] < lowest) { lowest = country.resources[com]; target = com; }
         }

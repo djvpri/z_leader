@@ -114,6 +114,18 @@ const WORLD_EVENTS = [
     shock: [{ com: 'food', dir: +1 }] },
   { msg: 'Global manufacturing boom lifts industrial commodity prices.',      type: 'milestone',
     shock: [{ com: 'industry', dir: +1 }] },
+  { msg: 'Rare earth shortage — mineral prices spike as supply tightens.',    type: 'warning',
+    shock: [{ com: 'minerals', dir: +1 }] },
+  { msg: 'New mining discoveries flood markets — mineral prices fall.',       type: 'event',
+    shock: [{ com: 'minerals', dir: -1 }] },
+  { msg: 'Tech sector boom — global demand for electronics surges.',          type: 'milestone',
+    shock: [{ com: 'tech', dir: +1 }] },
+  { msg: 'Trade war restricts technology exports — tech prices slide.',       type: 'warning',
+    shock: [{ com: 'tech', dir: -1 }] },
+  { msg: 'Green energy transition drives demand for critical minerals.',      type: 'event',
+    shock: [{ com: 'minerals', dir: +1 }, { com: 'industry', dir: +1 }] },
+  { msg: 'Semiconductor breakthrough — production costs fall sharply.',       type: 'milestone',
+    shock: [{ com: 'tech', dir: -1 }] },
 ];
 
 function _randomWorldEvent() {
