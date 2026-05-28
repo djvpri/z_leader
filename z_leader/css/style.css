@@ -839,3 +839,47 @@ button:disabled { opacity: 0.4; cursor: default; }
 
 /* Shift notifications above ticker */
 #notifications { bottom: 42px; }
+
+/* ── Production Chains ── */
+#panel-chains { margin-bottom: 4px; }
+
+.chain-row {
+  padding: 7px 8px; border-radius: 5px;
+  margin-bottom: 6px; border: 1px solid;
+  transition: border-color 0.2s;
+}
+.chain-active   { background: #071a0f; border-color: #14532d; }
+.chain-partial  { background: #1a1200; border-color: #78350f; }
+.chain-inactive { background: #0d1520; border-color: #1e3a4a; opacity: 0.6; }
+
+.chain-header {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 5px;
+}
+.chain-icon { font-size: 14px; flex-shrink: 0; }
+.chain-name { font-size: 11px; font-weight: 700; color: #e2e8f0; flex: 1; }
+
+.chain-status-badge {
+  font-size: 8px; font-weight: 700; letter-spacing: 0.5px;
+  padding: 1px 6px; border-radius: 8px; flex-shrink: 0;
+}
+.chain-badge-active   { background: #14532d; color: #4ade80; }
+.chain-badge-partial  { background: #78350f; color: #fcd34d; }
+.chain-badge-inactive { background: #1e3a4a; color: #475569; }
+
+.chain-reqs {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px;
+}
+.chain-req {
+  font-size: 9px; padding: 1px 5px; border-radius: 3px;
+}
+.chain-req-ok  { background: #0f2a18; color: #4ade80; border: 1px solid #14532d; }
+.chain-req-no  { background: #2a1500; color: #f97316; border: 1px solid #7c2d12; }
+
+.chain-bonuses {
+  display: flex; flex-wrap: wrap; gap: 4px; padding-top: 3px;
+  border-top: 1px solid #14532d;
+}
+.chain-bonus-item {
+  font-size: 9px; color: #86efac;
+  background: #0a1f10; padding: 1px 5px; border-radius: 3px;
+}

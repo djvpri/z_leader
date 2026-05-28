@@ -289,9 +289,10 @@ const UI = {
     document.getElementById('panel-mil-intel').style.display = 'block';
     this._renderMilIntel(c);
 
-    // Stability + blocks — always visible
+    // Stability + blocks + chains — always visible
     this._renderStability(sid, c);
     this._renderBlocks(sid);
+    this._renderProductionChains(sid);
 
     // Resources — always visible
     this._renderResources(c);
@@ -757,6 +758,47 @@ const UI = {
                    renderGroup('▼ Importers', importers, 'import');
   },
 
+  _renderProductionChains(id) {
+    const el = document.getElementById('chains-list');
+    if (!el) return;
+    const chains = GameState.calcProductionChains ? GameState.calcProductionChains(id) : [];
+    if (!chains.length) { el.innerHTML = ''; return; }
+
+    const BONUS_LABELS = {
+      militaryMaintMult: (v) => `Military cost ×${v.toFixed(2)}`,
+      industryTradeMult: (v) => `Industry export +${((v)*100)|0}%`,
+      researchSpeed:     (v) => `Research +${((v)*100)|0}% speed`,
+      techTradeMult:     (v) => `Tech export +${((v)*100)|0}%`,
+      popGrowthBonus:    (v) => `Population +${(v*400).toFixed(1)}%/yr`,
+      stabilityPerYear:  (v) => `Stability +${v}/yr`,
+      gdpGrowthBonus:    (v) => `GDP growth +${(v*400).toFixed(1)}%/yr`,
+      allTradeMult:      (v) => `All exports +${((v)*100)|0}%`,
+    };
+
+    el.innerHTML = chains.map(ch => {
+      const reqHtml = Object.entries(ch.metReqs).map(([com, r]) =>
+        `<span class="chain-req ${r.met ? 'chain-req-ok' : 'chain-req-no'}">${com} ${r.current}/${r.threshold}</span>`
+      ).join('');
+
+      const bonusHtml = ch.status === 'active'
+        ? Object.entries(ch.bonuses).map(([k, v]) => {
+            const fn = BONUS_LABELS[k];
+            return fn ? `<span class="chain-bonus-item">${fn(v)}</span>` : '';
+          }).join('')
+        : '';
+
+      return `<div class="chain-row chain-${ch.status}">
+        <div class="chain-header">
+          <span class="chain-icon">${ch.icon}</span>
+          <span class="chain-name">${ch.name}</span>
+          <span class="chain-status-badge chain-badge-${ch.status}">${ch.status === 'active' ? 'ACTIVE' : ch.status === 'partial' ? 'PARTIAL' : '—'}</span>
+        </div>
+        <div class="chain-reqs">${reqHtml}</div>
+        ${bonusHtml ? `<div class="chain-bonuses">${bonusHtml}</div>` : ''}
+      </div>`;
+    }).join('');
+  },
+
   _renderStability(id, c) {
     const stab   = c.stability || 70;
     const fillEl = document.getElementById('stab-fill');
@@ -888,6 +930,7 @@ const UI = {
       document.getElementById('panel-military').textContent = `${p.military.toFixed(0)}K`;
       this._renderMilIntel(p);
       this._renderStability(GameState.playerCountryId, p);
+      this._renderProductionChains(GameState.playerCountryId);
       this._renderTrade(GameState.playerCountryId, p);
       this._updateBudgetSummary();
       this._renderRelations(p);

@@ -7,6 +7,49 @@ const TRADE_BLOCKS = {
   au:    { name: 'African Union',  icon: '🌍',  members: new Set(['12','24','120','178','180','231','266','288','324','384','404','430','434','504','508','516','566','686','706','710','736','894']),        bonus: { commodity: 'minerals', rate: 0.15 } },
 };
 
+const PRODUCTION_CHAINS = [
+  {
+    id:       'fuel',
+    name:     'Fuel Processing',
+    icon:     '⛽',
+    desc:     'Oil refined into fuel — powers industry & cuts military costs',
+    requires: { oil: 50 },
+    bonuses:  { militaryMaintMult: 0.85, industryTradeMult: 0.15 },
+  },
+  {
+    id:       'components',
+    name:     'Component Mfg.',
+    icon:     '🔩',
+    desc:     'Minerals + Industry → components accelerate tech research',
+    requires: { minerals: 45, industry: 40 },
+    bonuses:  { researchSpeed: 0.25, techTradeMult: 0.20 },
+  },
+  {
+    id:       'agri_complex',
+    name:     'Agri-Industrial',
+    icon:     '🌾',
+    desc:     'Food surplus + industry → processed food, faster population growth',
+    requires: { food: 55, industry: 35 },
+    bonuses:  { popGrowthBonus: 0.002, stabilityPerYear: 4 },
+  },
+  {
+    id:       'hi_tech_mfg',
+    name:     'Hi-Tech Mfg.',
+    icon:     '🏭',
+    desc:     'Tech expertise + industrial base → premium exports & GDP boost',
+    requires: { tech: 55, industry: 50 },
+    bonuses:  { gdpGrowthBonus: 0.003, techTradeMult: 0.25, industryTradeMult: 0.20 },
+  },
+  {
+    id:       'industrial_nexus',
+    name:     'Industrial Nexus',
+    icon:     '🔋',
+    desc:     'Oil + Minerals + Industry — fully integrated resource economy',
+    requires: { oil: 40, minerals: 40, industry: 45 },
+    bonuses:  { gdpGrowthBonus: 0.002, allTradeMult: 0.10 },
+  },
+];
+
 const COUNTRY_DATA = {
   4:   { name: 'Afghanistan',       gdp: 20,    population: 40,   military: 170, treasury: 10  },
   12:  { name: 'Algeria',           gdp: 191,   population: 45,   military: 317, treasury: 200 },
@@ -647,6 +690,16 @@ const GameState = {
     const exportMult = (1 + c.tradePartners.length * 0.15 * tradeMult) * dipMult;
     const rates      = { oil: 0.006, food: 0.004, industry: 0.005, minerals: 0.0055, tech: 0.007 };
     const result     = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0, total: 0 };
+
+    // Production chain export multipliers
+    const activeChains  = this.calcProductionChains(sid).filter(ch => ch.status === 'active');
+    let chainAllMult = 1.0, chainTechMult = 1.0, chainIndMult = 1.0;
+    for (const ch of activeChains) {
+      if (ch.bonuses.allTradeMult)      chainAllMult  *= (1 + ch.bonuses.allTradeMult);
+      if (ch.bonuses.techTradeMult)     chainTechMult *= (1 + ch.bonuses.techTradeMult);
+      if (ch.bonuses.industryTradeMult) chainIndMult  *= (1 + ch.bonuses.industryTradeMult);
+    }
+
     for (const [key, rate] of Object.entries(rates)) {
       const surplus = ((c.resources[key] || 0) - BASE) / 100;
       const price   = this.commodityPrices[key] || 1;
@@ -671,7 +724,14 @@ const GameState = {
           }
         }
       }
-      result[key]   = c.gdp * surplus * rate * price * mult * blockBonus;
+      // Production chain bonus (exports only)
+      let chainMult = 1.0;
+      if (surplus >= 0) {
+        chainMult = chainAllMult;
+        if (key === 'tech')     chainMult *= chainTechMult;
+        if (key === 'industry') chainMult *= chainIndMult;
+      }
+      result[key]   = c.gdp * surplus * rate * price * mult * blockBonus * chainMult;
       result.total += result[key];
     }
     return result;
@@ -743,7 +803,15 @@ const GameState = {
     if (p.treasury < cost) return false;
     p.treasury -= cost;
     p.factories[commodity]++;
+    const prevActive = this.calcProductionChains(this.playerCountryId).filter(c => c.status === 'active').map(c => c.id);
     p.resources[commodity] += 20;
+    const nowActive  = this.calcProductionChains(this.playerCountryId).filter(c => c.status === 'active').map(c => c.id);
+    for (const cid of nowActive) {
+      if (!prevActive.includes(cid)) {
+        const ch = PRODUCTION_CHAINS.find(c => c.id === cid);
+        if (ch) Notifications.show(`Production chain unlocked: <b>${ch.icon} ${ch.name}</b>!`, 'milestone', 7000);
+      }
+    }
     return true;
   },
 
@@ -752,6 +820,22 @@ const GameState = {
     return Object.entries(TRADE_BLOCKS)
       .filter(([, b]) => b.members.has(sid))
       .map(([key, b]) => ({ key, name: b.name, icon: b.icon, bonus: b.bonus }));
+  },
+
+  calcProductionChains(id) {
+    const c = this.countries[String(id)];
+    if (!c) return [];
+    const res = c.resources || {};
+    return PRODUCTION_CHAINS.map(chain => {
+      const metReqs = {};
+      let allMet = true, anyMet = false;
+      for (const [com, threshold] of Object.entries(chain.requires)) {
+        const met = (res[com] || 0) >= threshold;
+        metReqs[com] = { threshold, current: Math.round(res[com] || 0), met };
+        if (met) anyMet = true; else allMet = false;
+      }
+      return { ...chain, status: allMet ? 'active' : anyMet ? 'partial' : 'inactive', metReqs };
+    });
   },
 
   doSpy(targetId, operation) {
@@ -966,9 +1050,25 @@ const GameState = {
       const netFlow  = revenue - milSpend - devSpend + tradeBal.total;
       country.treasury += netFlow;
 
+      // ── Production chains ─────────────────────────────────────
+      const chains = this.calcProductionChains(id);
+      const activeChains = chains.filter(ch => ch.status === 'active');
+      let chainGdpBonus     = 0;
+      let chainPopBonus     = 0;
+      let chainStabilityQ   = 0;  // per quarter
+      let chainMilMaintMult = 1.0;
+      let chainResearchSpd  = 0;  // bonus chance per quarter
+      for (const ch of activeChains) {
+        if (ch.bonuses.gdpGrowthBonus)    chainGdpBonus     += ch.bonuses.gdpGrowthBonus;
+        if (ch.bonuses.popGrowthBonus)    chainPopBonus     += ch.bonuses.popGrowthBonus;
+        if (ch.bonuses.stabilityPerYear)  chainStabilityQ   += ch.bonuses.stabilityPerYear / 4;
+        if (ch.bonuses.militaryMaintMult) chainMilMaintMult *= ch.bonuses.militaryMaintMult;
+        if (ch.bonuses.researchSpeed)     chainResearchSpd  += ch.bonuses.researchSpeed;
+      }
+
       // Military maintenance & recruitment
       const maintMult   = (isPlayer && this.unlockedTechs.has('adv_mfg')) ? 0.5 : 1;
-      const maintenance = country.military * 0.0012 * maintMult;
+      const maintenance = country.military * 0.0012 * maintMult * chainMilMaintMult;
       const milSurplus  = milSpend - maintenance;
       if (milSurplus > 0) {
         const newTroops = milSurplus / 12;
@@ -994,7 +1094,7 @@ const GameState = {
         sd -= (country.sanctionedBy || []).length * 0.20;
         if (netFlow > 0) sd += 0.30;
         if ((country.enemies || []).length === 0) sd += 0.20;
-        country.stability = Math.max(0, Math.min(100, country.stability + sd));
+        country.stability = Math.max(0, Math.min(100, country.stability + sd + chainStabilityQ));
         if (isPlayer && country.stability < 30 && Math.random() < 0.04) {
           Notifications.show(`Stability critical: ${Math.round(country.stability)} — unrest threatens the government.`, 'danger', 7000);
         }
@@ -1006,7 +1106,8 @@ const GameState = {
       if (!country.occupiedBy) {
         const popRate = 0.0015
           - (country.enemies || []).length * 0.0005
-          - (country.inflation || 0) * 0.00001;
+          - (country.inflation || 0) * 0.00001
+          + chainPopBonus;
         country.population = Math.max(0.1, country.population * (1 + Math.max(0, popRate)));
       }
 
@@ -1041,12 +1142,17 @@ const GameState = {
       const inflPenalty  = (country.inflation || 0) * 0.0002;
 
       country.gdp *= 1 + Math.max(0.0005,
-        0.0015 + devBoost + resBonus + leaderGdpBns + cycleBonus + fdiBonus
+        0.0015 + devBoost + resBonus + leaderGdpBns + cycleBonus + fdiBonus + chainGdpBonus
         - warPenalty - sanctionHit - inflPenalty - energyPenalty - stabilityPenalty - pandemicPenalty
       );
 
       if (isPlayer && this.unlockedTechs.has('banking') && country.treasury > 0) {
         country.treasury *= 1.005;
+      }
+
+      // Component chain research speed bonus (extra progress tick chance)
+      if (isPlayer && this.currentResearch && chainResearchSpd > 0 && Math.random() < chainResearchSpd) {
+        this.researchProgress++;
       }
 
       // Inflasi: naik saat defisit anggaran atau perang, turun saat surplus
@@ -1086,11 +1192,11 @@ const GameState = {
         if (isPlayer) Notifications.show('CIVIL WAR — political crisis collapses GDP and trade!', 'danger', 10000);
       }
 
-      // ── GDP history snapshot (untuk charts, player only, sekali per tahun)
-      if (isPlayer && newYear) {
+      // ── GDP history snapshot (all active countries, once per year)
+      if (newYear && !country.occupiedBy) {
         if (!country.gdpHistory) country.gdpHistory = [];
         country.gdpHistory.push(Math.round(country.gdp));
-        if (country.gdpHistory.length > 30) country.gdpHistory.shift();
+        if (country.gdpHistory.length > 20) country.gdpHistory.shift();
       }
 
       // AI factory building: invest in most-deficient commodity when flush
