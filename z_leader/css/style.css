@@ -109,6 +109,32 @@ body {
 #panel-country[data-relation="enemy"]     h2 { color: #f87171; border-bottom-color: #3f0c0c; }
 #panel-country[data-relation="territory"] h2 { color: #4ade80; opacity: 0.75; border-bottom-color: #14532d; }
 
+/* ── Leader Card ── */
+.leader-card {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; background: #0d1f33;
+  border: 1px solid #1e3a4a; border-radius: 6px;
+  margin-bottom: 12px;
+}
+.leader-icon  { font-size: 22px; flex-shrink: 0; line-height: 1; }
+.leader-info  { flex: 1; min-width: 0; }
+.leader-name  { font-size: 13px; font-weight: 700; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.leader-meta  { display: flex; align-items: center; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
+.leader-title { font-size: 10px; color: #475569; }
+.leader-bonus { font-size: 10px; color: #64748b; margin-top: 3px; }
+
+.trait-badge {
+  font-size: 9px; font-weight: 700; padding: 1px 6px;
+  border-radius: 10px; text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0;
+}
+.trait-neutral      { background: #1a2d3d; color: #64748b; border: 1px solid #1e3a4a; }
+.trait-militarist   { background: #3f0c0c; color: #f87171; border: 1px solid #7f1d1d; }
+.trait-economist    { background: #1a1200; color: #fbbf24; border: 1px solid #78350f; }
+.trait-industrialist{ background: #071020; color: #60a5fa; border: 1px solid #1e3a7a; }
+.trait-diplomat     { background: #0d0a20; color: #a78bfa; border: 1px solid #4c1d95; }
+.trait-nationalist  { background: #1a0a00; color: #fb923c; border: 1px solid #7c2d12; }
+.trait-reformer     { background: #071a0f; color: #4ade80; border: 1px solid #14532d; }
+
 /* ── Status Badge ── */
 .status-badge { padding: 2px 9px; border-radius: 10px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
 .status-player    { background: #0f2a18; color: #4ade80; }

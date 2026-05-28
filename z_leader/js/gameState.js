@@ -144,6 +144,112 @@ const TECH_TREE = {
                     desc: 'Military maintenance cost ×0.5' },
 };
 
+// Leader traits and their player bonuses
+const TRAIT_BONUS = {
+  militarist:    '+10% Combat Strength',
+  economist:     '+GDP Growth /quarter',
+  industrialist: '+20% Resource GDP',
+  diplomat:      '+25% Trade Income',
+  nationalist:   '+25% War Income',
+  reformer:      '+2% Tax Efficiency',
+};
+
+const PRESIDENT_DATA = {
+  4:   { title: 'President',        name: 'Abdul Karim Wardak',   trait: 'militarist'    },
+  12:  { title: 'President',        name: 'Rachid Benali',        trait: 'nationalist'   },
+  24:  { title: 'President',        name: 'João Domingos',        trait: 'economist'     },
+  32:  { title: 'President',        name: 'Valentín Herrera',     trait: 'reformer'      },
+  36:  { title: 'Prime Minister',   name: 'James Whitfield',      trait: 'diplomat'      },
+  50:  { title: 'Prime Minister',   name: 'Fatema Chowdhury',     trait: 'reformer'      },
+  56:  { title: 'Prime Minister',   name: 'Marc Dehaene',         trait: 'diplomat'      },
+  68:  { title: 'President',        name: 'Luis Mamani',          trait: 'nationalist'   },
+  76:  { title: 'President',        name: 'Carlos Andrade',       trait: 'economist'     },
+  104: { title: 'General',          name: 'Min Aung Zaw',         trait: 'militarist'    },
+  116: { title: 'Prime Minister',   name: 'Hun Visal',            trait: 'nationalist'   },
+  120: { title: 'President',        name: 'Paul Ndoumbe',         trait: 'nationalist'   },
+  124: { title: 'Prime Minister',   name: 'Catherine Mackay',     trait: 'diplomat'      },
+  152: { title: 'President',        name: 'Rodrigo Muñoz',        trait: 'economist'     },
+  156: { title: 'Chairman',         name: 'Chen Yongkang',        trait: 'industrialist' },
+  170: { title: 'President',        name: 'Alejandro Vargas',     trait: 'reformer'      },
+  178: { title: 'President',        name: 'Denis Mbemba',         trait: 'nationalist'   },
+  180: { title: 'President',        name: 'Jean-Baptiste Lumumba',trait: 'militarist'    },
+  214: { title: 'President',        name: 'Rafael Méndez',        trait: 'economist'     },
+  218: { title: 'President',        name: 'Andrés Montoya',       trait: 'reformer'      },
+  818: { title: 'President',        name: 'Khalid El-Rashidi',    trait: 'militarist'    },
+  231: { title: 'Prime Minister',   name: 'Dawit Bekele',         trait: 'reformer'      },
+  246: { title: 'President',        name: 'Matti Virtanen',       trait: 'diplomat'      },
+  250: { title: 'President',        name: 'Édouard Fontaine',     trait: 'diplomat'      },
+  266: { title: 'President',        name: 'Omar Bongo Jr.',       trait: 'economist'     },
+  276: { title: 'Chancellor',       name: 'Lena Hartmann',        trait: 'economist'     },
+  288: { title: 'President',        name: 'Kwame Asante',         trait: 'diplomat'      },
+  300: { title: 'Prime Minister',   name: 'Nikos Papadopoulos',   trait: 'economist'     },
+  320: { title: 'President',        name: 'Miguel Fuentes',       trait: 'nationalist'   },
+  324: { title: 'President',        name: 'Alpha Diallo',         trait: 'militarist'    },
+  340: { title: 'President',        name: 'Claudia Espinoza',     trait: 'nationalist'   },
+  348: { title: 'Prime Minister',   name: 'Zoltán Fekete',        trait: 'nationalist'   },
+  356: { title: 'Prime Minister',   name: 'Amit Chandra',         trait: 'nationalist'   },
+  360: { title: 'President',        name: 'Agus Purnomo',         trait: 'industrialist' },
+  364: { title: 'President',        name: 'Ali Hosseini',         trait: 'militarist'    },
+  368: { title: 'Prime Minister',   name: 'Hassan Al-Jabouri',    trait: 'militarist'    },
+  372: { title: 'Taoiseach',        name: "Seamus O'Sullivan",    trait: 'diplomat'      },
+  376: { title: 'Prime Minister',   name: 'David Ben-Levi',       trait: 'militarist'    },
+  380: { title: 'Prime Minister',   name: 'Marco Ferretti',       trait: 'economist'     },
+  384: { title: 'President',        name: 'Alassane Kouadio',     trait: 'economist'     },
+  392: { title: 'Prime Minister',   name: 'Takeshi Yamamoto',     trait: 'industrialist' },
+  400: { title: 'King',             name: 'Abdullah III',         trait: 'diplomat'      },
+  398: { title: 'President',        name: 'Aibek Seitkali',       trait: 'industrialist' },
+  404: { title: 'President',        name: 'Kamau Njoroge',        trait: 'economist'     },
+  408: { title: 'Supreme Leader',   name: 'Kim Jong-nam',         trait: 'militarist'    },
+  410: { title: 'President',        name: 'Lee Jae-hyun',         trait: 'industrialist' },
+  414: { title: 'Emir',             name: 'Sheikh Sabah IV',      trait: 'economist'     },
+  418: { title: 'President',        name: 'Thongsing Phomma',     trait: 'nationalist'   },
+  422: { title: 'President',        name: 'Samir Khoury',         trait: 'reformer'      },
+  430: { title: 'President',        name: 'Ellen Brewer',         trait: 'reformer'      },
+  434: { title: 'Prime Minister',   name: 'Mohamed Dabaiba Jr.',  trait: 'nationalist'   },
+  458: { title: 'Prime Minister',   name: 'Ahmad Ismail',         trait: 'economist'     },
+  484: { title: 'President',        name: 'Claudia Torres',       trait: 'nationalist'   },
+  504: { title: 'King',             name: 'Mohammed VII',         trait: 'diplomat'      },
+  508: { title: 'President',        name: 'Felipe Nyusi Jr.',     trait: 'reformer'      },
+  516: { title: 'President',        name: 'Netumbo Nandi',        trait: 'reformer'      },
+  524: { title: 'President',        name: 'Ram Bahadur',          trait: 'nationalist'   },
+  528: { title: 'Prime Minister',   name: 'Ruud van der Berg',    trait: 'diplomat'      },
+  566: { title: 'President',        name: 'Emeka Okafor',         trait: 'nationalist'   },
+  578: { title: 'Prime Minister',   name: 'Erik Solberg',         trait: 'diplomat'      },
+  586: { title: 'Prime Minister',   name: 'Imran Nawaz',          trait: 'militarist'    },
+  591: { title: 'President',        name: 'Laurentino Herrera',   trait: 'economist'     },
+  598: { title: 'Prime Minister',   name: 'James Marape II',      trait: 'nationalist'   },
+  604: { title: 'President',        name: 'Dina Castillo',        trait: 'reformer'      },
+  608: { title: 'President',        name: 'Ramon Aquino',         trait: 'nationalist'   },
+  616: { title: 'President',        name: 'Andrzej Kowalski',     trait: 'militarist'    },
+  620: { title: 'Prime Minister',   name: 'António Melo',         trait: 'economist'     },
+  634: { title: 'Emir',             name: 'Sheikh Tamim II',      trait: 'economist'     },
+  642: { title: 'President',        name: 'Gheorghe Ionescu',     trait: 'reformer'      },
+  643: { title: 'President',        name: 'Vladimir Petrov',      trait: 'militarist'    },
+  682: { title: 'King',             name: 'Salman II',            trait: 'industrialist' },
+  686: { title: 'President',        name: 'Bassirou Diallo',      trait: 'diplomat'      },
+  706: { title: 'President',        name: 'Hassan Sheikh II',     trait: 'militarist'    },
+  710: { title: 'President',        name: 'Sipho Dlamini',        trait: 'reformer'      },
+  724: { title: 'Prime Minister',   name: 'Pedro Morales',        trait: 'economist'     },
+  736: { title: 'Chairman',         name: 'Abdel Fattah Hemeti',  trait: 'militarist'    },
+  752: { title: 'Prime Minister',   name: 'Anna Lindqvist',       trait: 'diplomat'      },
+  756: { title: 'President',        name: 'Hans Müller',          trait: 'economist'     },
+  760: { title: 'President',        name: 'Ahmad Al-Rashi',       trait: 'militarist'    },
+  764: { title: 'Prime Minister',   name: 'Somchai Prasong',      trait: 'militarist'    },
+  792: { title: 'President',        name: 'Recep Yilmaz',         trait: 'nationalist'   },
+  800: { title: 'President',        name: 'Patrick Nkurunziza',   trait: 'nationalist'   },
+  804: { title: 'President',        name: 'Volodymyr Kovalenko',  trait: 'militarist'    },
+  784: { title: 'President',        name: 'Sultan Al-Mansouri',   trait: 'industrialist' },
+  826: { title: 'Prime Minister',   name: 'William Clarke',       trait: 'diplomat'      },
+  840: { title: 'President',        name: 'Michael Harrison',     trait: 'economist'     },
+  858: { title: 'President',        name: 'Roberto Blanco',       trait: 'reformer'      },
+  860: { title: 'President',        name: 'Bakhtiyor Tashkentov', trait: 'nationalist'   },
+  862: { title: 'President',        name: 'Hugo Castillo',        trait: 'nationalist'   },
+  704: { title: 'General Secretary',name: 'Nguyen Van Duc',       trait: 'nationalist'   },
+  887: { title: 'President',        name: 'Rashad Al-Alimi II',   trait: 'militarist'    },
+  894: { title: 'President',        name: 'Edgar Mwamba',         trait: 'reformer'      },
+  716: { title: 'President',        name: 'Constantino Chiwenga', trait: 'nationalist'   },
+};
+
 // Recruit packs: each costs $50B
 const RECRUIT_PACKS = {
   infantry:  { amount: 100, cost: 50, label: 'Infantry  +100K — $50B' },
@@ -185,6 +291,7 @@ const GameState = {
           fighters:  Math.round(m * 0.07),
         },
         occupiedBy: null,
+        leader: { ...(PRESIDENT_DATA[id] || { title: 'President', name: 'Unknown', trait: 'nationalist' }) },
       };
     }
   },
@@ -200,6 +307,7 @@ const GameState = {
     if (isPlayer && this.unlockedTechs.has('armor_doctrine')) { tankMult = 7.5; artMult = 12; }
     let str = u.infantry + u.tanks * tankMult + u.artillery * artMult + u.fighters * 6;
     if (isPlayer && this.unlockedTechs.has('tactics')) str = Math.round(str * 1.15);
+    if (isPlayer && c.leader?.trait === 'militarist')  str = Math.round(str * 1.10);
     return Math.round(str);
   },
 
@@ -319,7 +427,8 @@ const GameState = {
     if (!player.enemies.includes(tid)) return false;
     if (this.calcStrength(this.playerCountryId) < this.calcStrength(tid) * 2) return false;
     if (target.treasury < 10) return false;
-    const amount = Math.max(10, Math.min(target.treasury * 0.25, 500));
+    const natMult = (player.leader?.trait === 'nationalist') ? 1.25 : 1;
+    const amount  = Math.max(10, Math.min(target.treasury * 0.25 * natMult, 500));
     target.treasury -= amount;
     player.treasury += amount;
     Notifications.show(`Tribute from <b>${target.name}</b>: +$${amount.toFixed(0)}B seized.`, 'milestone', 6000);
@@ -358,8 +467,9 @@ const GameState = {
     const player = this.countries[this.playerCountryId];
     const target = this.countries[tid];
 
-    const gdpGain = target.gdp * 0.40;
-    const trsGain = Math.max(0, target.treasury * 0.25);
+    const natMult = (player.leader?.trait === 'nationalist') ? 1.25 : 1;
+    const gdpGain = target.gdp * 0.40 * natMult;
+    const trsGain = Math.max(0, target.treasury * 0.25 * natMult);
     const milGain = Math.round(target.military * 0.50);
 
     player.gdp      += gdpGain;
@@ -462,10 +572,12 @@ const GameState = {
   },
 
   calcBudget(id) {
-    const c = this.countries[String(id)];
+    const sid = String(id);
+    const c = this.countries[sid];
     if (!c) return null;
     const b          = c.budget;
-    const revenue    = c.gdp * b.taxRate / 4;
+    const extra      = (sid === this.playerCountryId && c.leader?.trait === 'reformer') ? c.gdp * 0.02 / 4 : 0;
+    const revenue    = c.gdp * b.taxRate / 4 + extra;
     const milSpend   = revenue * b.militaryAlloc;
     const devSpend   = revenue * b.devAlloc;
     const toTreasury = revenue - milSpend - devSpend;
@@ -481,7 +593,8 @@ const GameState = {
     const BASE       = 40;
     const isPlayer   = sid === this.playerCountryId;
     const tradeMult  = (isPlayer && this.unlockedTechs.has('trade_networks')) ? 2 : 1;
-    const exportMult = 1 + c.tradePartners.length * 0.15 * tradeMult;
+    const dipMult    = (isPlayer && c.leader?.trait === 'diplomat') ? 1.25 : 1;
+    const exportMult = (1 + c.tradePartners.length * 0.15 * tradeMult) * dipMult;
     const rates      = { oil: 0.006, food: 0.004, industry: 0.005 };
     const result     = { oil: 0, food: 0, industry: 0, total: 0 };
     for (const [key, rate] of Object.entries(rates)) {
@@ -607,7 +720,9 @@ const GameState = {
     for (const [id, country] of Object.entries(this.countries)) {
       const b        = country.budget;
       const isPlayer = id === this.playerCountryId;
-      const revenue  = country.gdp * b.taxRate / 4;
+      const leader   = isPlayer ? country.leader : null;
+      const extra    = (leader?.trait === 'reformer') ? country.gdp * 0.02 / 4 : 0;
+      const revenue  = country.gdp * b.taxRate / 4 + extra;
       const milSpend = revenue * b.militaryAlloc;
       const devSpend = revenue * b.devAlloc;
       country.treasury += revenue - milSpend - devSpend;
@@ -633,14 +748,16 @@ const GameState = {
 
       // GDP growth with tech bonuses
       const res       = country.resources;
-      const resMult   = (isPlayer && this.unlockedTechs.has('resource_ext')) ? 1.5 : 1;
-      const resBonus  = (res.oil + res.food + res.industry) / 250000 * resMult;
+      const resMult      = (isPlayer && this.unlockedTechs.has('resource_ext')) ? 1.5 : 1;
+      const leaderResMult= (leader?.trait === 'industrialist') ? 1.2 : 1;
+      const resBonus     = (res.oil + res.food + res.industry) / 250000 * resMult * leaderResMult;
       const devMult   = (isPlayer && this.unlockedTechs.has('heavy_industry')) ? 2 : 1;
       const devBoost  = b.devAlloc * b.taxRate * 0.04 * devMult;
-      const warPenalty  = isPlayer ? country.enemies.length * 0.0025 : 0;
-      const sanctionMult= (isPlayer && this.unlockedTechs.has('econ_hegemony')) ? 0.2 : 1;
-      const sanctionHit = country.sanctionedBy.length  * 0.005 * sanctionMult;
-      country.gdp *= 1 + Math.max(0.0005, 0.0015 + devBoost + resBonus - warPenalty - sanctionHit);
+      const warPenalty   = isPlayer ? country.enemies.length * 0.0025 : 0;
+      const sanctionMult = (isPlayer && this.unlockedTechs.has('econ_hegemony')) ? 0.2 : 1;
+      const sanctionHit  = country.sanctionedBy.length * 0.005 * sanctionMult;
+      const leaderGdpBns = (leader?.trait === 'economist') ? 0.001 : 0;
+      country.gdp *= 1 + Math.max(0.0005, 0.0015 + devBoost + resBonus + leaderGdpBns - warPenalty - sanctionHit);
 
       if (isPlayer && this.unlockedTechs.has('banking') && country.treasury > 0) {
         country.treasury *= 1.005;

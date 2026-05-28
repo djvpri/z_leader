@@ -2,6 +2,15 @@
 
 let _tradeCom = 'oil';
 
+const TRAIT_CFG = {
+  militarist:    { icon: '🪖', cls: 'trait-militarist',    label: 'Militarist'    },
+  economist:     { icon: '💼', cls: 'trait-economist',     label: 'Economist'     },
+  industrialist: { icon: '⚙',  cls: 'trait-industrialist', label: 'Industrialist' },
+  diplomat:      { icon: '🤝', cls: 'trait-diplomat',      label: 'Diplomat'      },
+  nationalist:   { icon: '⚑',  cls: 'trait-nationalist',   label: 'Nationalist'   },
+  reformer:      { icon: '📋', cls: 'trait-reformer',      label: 'Reformer'      },
+};
+
 const OUTCOME_MSG = {
   decisive: { text: 'Decisive Victory', type: 'war' },
   victory:  { text: 'Victory',          type: 'war' },
@@ -228,6 +237,9 @@ const UI = {
     document.getElementById('panel-mil-intel').style.display = 'block';
     this._renderMilIntel(c);
 
+    // Leader card — always visible
+    this._renderLeader(sid, c);
+
     // Resources — always visible
     this._renderResources(c);
 
@@ -303,6 +315,29 @@ const UI = {
     document.getElementById('intel-tanks').textContent     = u.tanks.toLocaleString() + 'K';
     document.getElementById('intel-artillery').textContent = u.artillery.toLocaleString() + 'K';
     document.getElementById('intel-fighters').textContent  = u.fighters.toLocaleString() + 'K';
+  },
+
+  _renderLeader(id, c) {
+    const leader = c.leader;
+    if (!leader) return;
+    const cfg = TRAIT_CFG[leader.trait] || { icon: '👤', cls: 'trait-neutral', label: leader.trait };
+    const isPlayer = String(id) === GameState.playerCountryId;
+
+    document.getElementById('leader-icon').textContent  = cfg.icon;
+    document.getElementById('leader-name').textContent  = leader.name;
+    document.getElementById('leader-title').textContent = leader.title;
+
+    const badge = document.getElementById('leader-trait-badge');
+    badge.textContent = cfg.label;
+    badge.className   = 'trait-badge ' + cfg.cls;
+
+    const bonusEl = document.getElementById('leader-bonus');
+    if (isPlayer && TRAIT_BONUS[leader.trait]) {
+      bonusEl.textContent    = 'Bonus: ' + TRAIT_BONUS[leader.trait];
+      bonusEl.style.display  = 'block';
+    } else {
+      bonusEl.style.display  = 'none';
+    }
   },
 
   _renderResources(c) {
