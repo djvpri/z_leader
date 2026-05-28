@@ -3,12 +3,12 @@
 let _tradeCom = 'oil';
 
 const TRAIT_CFG = {
-  militarist:    { icon: '🪖', cls: 'trait-militarist',    label: 'Militarist'    },
-  economist:     { icon: '💼', cls: 'trait-economist',     label: 'Economist'     },
-  industrialist: { icon: '⚙',  cls: 'trait-industrialist', label: 'Industrialist' },
-  diplomat:      { icon: '🤝', cls: 'trait-diplomat',      label: 'Diplomat'      },
-  nationalist:   { icon: '⚑',  cls: 'trait-nationalist',   label: 'Nationalist'   },
-  reformer:      { icon: '📋', cls: 'trait-reformer',      label: 'Reformer'      },
+  militarist:    { icon: '🪖', cls: 'trait-militarist',    label: 'Militarist',    bonus: '+10% Combat Strength'  },
+  economist:     { icon: '💼', cls: 'trait-economist',     label: 'Economist',     bonus: '+GDP Growth /quarter'  },
+  industrialist: { icon: '⚙',  cls: 'trait-industrialist', label: 'Industrialist', bonus: '+20% Resource GDP'     },
+  diplomat:      { icon: '🤝', cls: 'trait-diplomat',      label: 'Diplomat',      bonus: '+25% Trade Income'     },
+  nationalist:   { icon: '⚑',  cls: 'trait-nationalist',   label: 'Nationalist',   bonus: '+25% War Income'       },
+  reformer:      { icon: '📋', cls: 'trait-reformer',      label: 'Reformer',      bonus: '+2% Tax Efficiency'    },
 };
 
 const OUTCOME_MSG = {
@@ -237,9 +237,6 @@ const UI = {
     document.getElementById('panel-mil-intel').style.display = 'block';
     this._renderMilIntel(c);
 
-    // Leader card — always visible
-    this._renderLeader(sid, c);
-
     // Resources — always visible
     this._renderResources(c);
 
@@ -302,6 +299,9 @@ const UI = {
 
     // Disable attack button if on cooldown
     document.getElementById('btn-attack').disabled = !GameState.attackReady;
+
+    // Leader card — rendered last so it never blocks button setup above
+    this._renderLeader(sid, c);
   },
 
   _renderMilIntel(c) {
@@ -320,23 +320,29 @@ const UI = {
   _renderLeader(id, c) {
     const leader = c.leader;
     if (!leader) return;
-    const cfg = TRAIT_CFG[leader.trait] || { icon: '👤', cls: 'trait-neutral', label: leader.trait };
+    const cfg = TRAIT_CFG[leader.trait] || { icon: '👤', cls: 'trait-neutral', label: leader.trait, bonus: '' };
     const isPlayer = String(id) === GameState.playerCountryId;
 
-    document.getElementById('leader-icon').textContent  = cfg.icon;
-    document.getElementById('leader-name').textContent  = leader.name;
-    document.getElementById('leader-title').textContent = leader.title;
+    const iconEl  = document.getElementById('leader-icon');
+    const nameEl  = document.getElementById('leader-name');
+    const titleEl = document.getElementById('leader-title');
+    const badge   = document.getElementById('leader-trait-badge');
+    if (!iconEl || !nameEl || !titleEl || !badge) return; // HTML not yet loaded
 
-    const badge = document.getElementById('leader-trait-badge');
+    iconEl.textContent  = cfg.icon;
+    nameEl.textContent  = leader.name;
+    titleEl.textContent = leader.title;
     badge.textContent = cfg.label;
     badge.className   = 'trait-badge ' + cfg.cls;
 
     const bonusEl = document.getElementById('leader-bonus');
-    if (isPlayer && TRAIT_BONUS[leader.trait]) {
-      bonusEl.textContent    = 'Bonus: ' + TRAIT_BONUS[leader.trait];
-      bonusEl.style.display  = 'block';
-    } else {
-      bonusEl.style.display  = 'none';
+    if (bonusEl) {
+      if (isPlayer && cfg.bonus) {
+        bonusEl.textContent   = 'Bonus: ' + cfg.bonus;
+        bonusEl.style.display = 'block';
+      } else {
+        bonusEl.style.display = 'none';
+      }
     }
   },
 
