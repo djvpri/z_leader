@@ -205,8 +205,13 @@ const UI = {
     document.getElementById('panel-military').textContent   = `${c.military.toFixed(0)}K`;
     document.getElementById('panel-treasury').textContent   = `$${c.treasury.toFixed(0)}B`;
 
-    const statusMap = { player: 'You', ally: 'Ally', enemy: 'Enemy', neutral: 'Neutral' };
-    document.getElementById('panel-status').textContent = isTerritory ? 'Your Territory' : (statusMap[c.relation] || 'Neutral');
+    const statusMap  = { player: 'You', ally: 'Ally', enemy: 'Enemy', neutral: 'Neutral' };
+    const statusText = isTerritory ? 'Your Territory' : (statusMap[c.relation] || 'Neutral');
+    const statusKey  = isTerritory ? 'territory' : (c.relation || 'neutral');
+    const statusEl   = document.getElementById('panel-status');
+    statusEl.textContent = statusText;
+    statusEl.className   = `status-badge status-${statusKey}`;
+    document.getElementById('panel-country').dataset.relation = statusKey;
 
     // Military intel — always visible
     document.getElementById('panel-mil-intel').style.display = 'block';
@@ -231,12 +236,15 @@ const UI = {
       document.getElementById('panel-recruit').style.display = 'none';
     }
 
-    // Tech — player only
+    // Tech + Victory Progress — player only
     if (isPlayer) {
       this._renderTechPanel();
-      document.getElementById('panel-tech').style.display = 'block';
+      this._renderVictoryProgress();
+      document.getElementById('panel-tech').style.display     = 'block';
+      document.getElementById('panel-progress').style.display = 'block';
     } else {
-      document.getElementById('panel-tech').style.display = 'none';
+      document.getElementById('panel-tech').style.display     = 'none';
+      document.getElementById('panel-progress').style.display = 'none';
     }
 
     // Relations — player only
@@ -410,6 +418,25 @@ const UI = {
     this._renderLeaderboard();
   },
 
+  _renderVictoryProgress() {
+    const p = GameState.getCountry(GameState.playerCountryId);
+    if (!p) return;
+
+    const annexed    = Object.values(GameState.countries).filter(c => c.occupiedBy === GameState.playerCountryId).length;
+    const controlled = 1 + annexed;
+    document.getElementById('vp-dom').style.width  = Math.min(100, controlled / 20 * 100) + '%';
+    document.getElementById('vp-dom-txt').textContent = `${controlled}/20`;
+
+    const ecoPct = Math.min(100, p.gdp / 30000 * 100);
+    document.getElementById('vp-eco').style.width  = ecoPct + '%';
+    document.getElementById('vp-eco-txt').textContent = Math.round(ecoPct) + '%';
+
+    const allies = p.allies.length, techs = GameState.unlockedTechs.size;
+    const dipPct = Math.min(100, (allies / 8 * 0.6 + techs / 5 * 0.4) * 100);
+    document.getElementById('vp-dip').style.width  = dipPct + '%';
+    document.getElementById('vp-dip-txt').textContent = `${allies}a/${techs}t`;
+  },
+
   _renderLeaderboard() {
     const el = document.getElementById('lb-entries');
     if (!el) return;
@@ -420,9 +447,10 @@ const UI = {
       .sort((a, b) => b.str - a.str)
       .slice(0, 12);
 
+    const medals = ['🥇','🥈','🥉'];
     el.innerHTML = rows.map((r, i) =>
       `<div class="lb-row${r.isPlayer ? ' lb-player' : ''}">` +
-      `<span class="lb-rank">${i + 1}</span>` +
+      `<span class="lb-rank${i < 3 ? ' lb-rank-' + (i+1) : ''}">${medals[i] || (i + 1)}</span>` +
       `<span class="lb-name">${r.name}</span>` +
       `<span class="lb-val">${r.str.toLocaleString()}</span>` +
       `</div>`
@@ -450,6 +478,7 @@ const UI = {
       this._updateBudgetSummary();
       this._renderRelations(p);
       this._renderTechPanel();
+      this._renderVictoryProgress();
     }
 
     // Re-enable attack button when cooldown resets

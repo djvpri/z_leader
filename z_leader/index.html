@@ -13,11 +13,11 @@
         <span id="player-country-name">-- Select Your Country --</span>
       </div>
       <div id="resources">
-        <div class="resource">Treasury: $<span id="treasury">0</span>B</div>
-        <div class="resource">GDP: $<span id="gdp">0</span>B/yr</div>
-        <div class="resource">Population: <span id="population">0</span>M</div>
-        <div class="resource">Military: <span id="military">0</span>K</div>
-        <div class="resource">Strength: <span id="hud-strength">0</span></div>
+        <div class="resource"><span class="res-icon">💰</span>Treasury: $<span id="treasury">0</span>B</div>
+        <div class="resource"><span class="res-icon">📈</span>GDP: $<span id="gdp">0</span>B/yr</div>
+        <div class="resource"><span class="res-icon">👥</span>Pop: <span id="population">0</span>M</div>
+        <div class="resource"><span class="res-icon">🪖</span>Military: <span id="military">0</span>K</div>
+        <div class="resource"><span class="res-icon">⚡</span>Strength: <span id="hud-strength">0</span></div>
       </div>
       <div id="game-controls">
         <div id="speed-controls">
@@ -151,6 +151,32 @@
             <div class="relations-block">
               <div class="relations-header">Trade Partners <span id="panel-trade-count" class="rel-count trade">0</span></div>
               <div id="panel-trade-list" class="relations-list"></div>
+            </div>
+          </div>
+
+          <!-- Victory Progress (player only) -->
+          <div id="panel-progress" style="display:none">
+            <div class="panel-section-title">Victory Progress</div>
+            <div class="vprog-row">
+              <div class="vprog-header"><span>⚑ Domination</span><span class="vprog-hint">20 nations</span></div>
+              <div class="vprog-wrap">
+                <div class="vprog-track"><div id="vp-dom" class="vprog-fill vprog-dom" style="width:0%"></div></div>
+                <span id="vp-dom-txt" class="vprog-num">0/20</span>
+              </div>
+            </div>
+            <div class="vprog-row">
+              <div class="vprog-header"><span>💰 Economic</span><span class="vprog-hint">$30,000B GDP</span></div>
+              <div class="vprog-wrap">
+                <div class="vprog-track"><div id="vp-eco" class="vprog-fill vprog-eco" style="width:0%"></div></div>
+                <span id="vp-eco-txt" class="vprog-num">0%</span>
+              </div>
+            </div>
+            <div class="vprog-row">
+              <div class="vprog-header"><span>🤝 Diplomatic</span><span class="vprog-hint">8 allies + 5 techs</span></div>
+              <div class="vprog-wrap">
+                <div class="vprog-track"><div id="vp-dip" class="vprog-fill vprog-dip" style="width:0%"></div></div>
+                <span id="vp-dip-txt" class="vprog-num">0/8</span>
+              </div>
             </div>
           </div>
 
