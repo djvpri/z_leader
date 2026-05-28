@@ -132,6 +132,11 @@ const AI = {
     const target = GameState.countries[chosen.tid];
     if (!target) return;
 
+    // Nuclear deterrence — player's nuclear arsenal deters AI aggression
+    if (chosen.tid === GameState.playerCountryId && GameState.unlockedTechs.has('nuclear')) {
+      if (Math.random() < 0.70) return;
+    }
+
     this._declareWarBetween(id, chosen.tid);
 
     const pid = GameState.playerCountryId;

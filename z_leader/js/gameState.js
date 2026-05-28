@@ -118,7 +118,31 @@ const RESOURCE_DATA = {
 };
 
 const DEFAULT_RESOURCES = { oil: 18, food: 42, industry: 28 };
-const DEFAULT_BUDGET    = { taxRate: 0.20, militaryAlloc: 0.30, devAlloc: 0.30 };
+const DEFAULT_BUDGET = { taxRate: 0.20, militaryAlloc: 0.30, devAlloc: 0.30 };
+
+const TECH_TREE = {
+  // Military branch
+  tactics:        { name: 'Tactics',            branch: 'military', tier: 1, cost: 100, quarters: 2, prereq: null,
+                    desc: '+15% combat strength' },
+  armor_doctrine: { name: 'Armor Doctrine',     branch: 'military', tier: 2, cost: 220, quarters: 3, prereq: 'tactics',
+                    desc: 'Tanks/artillery ×1.5 in strength' },
+  nuclear:        { name: 'Nuclear Arsenal',    branch: 'military', tier: 3, cost: 500, quarters: 5, prereq: 'armor_doctrine',
+                    desc: 'AI reluctant to declare war on you' },
+  // Economy branch
+  trade_networks: { name: 'Trade Networks',     branch: 'economy',  tier: 1, cost: 80,  quarters: 2, prereq: null,
+                    desc: 'Trade GDP bonus ×2 per partner' },
+  banking:        { name: 'Banking System',     branch: 'economy',  tier: 2, cost: 180, quarters: 3, prereq: 'trade_networks',
+                    desc: '+0.5% treasury interest per quarter' },
+  econ_hegemony:  { name: 'Econ. Hegemony',    branch: 'economy',  tier: 3, cost: 400, quarters: 4, prereq: 'banking',
+                    desc: 'Sanctions damage −80%' },
+  // Industry branch
+  resource_ext:   { name: 'Resource Extraction',branch: 'industry', tier: 1, cost: 100, quarters: 2, prereq: null,
+                    desc: '+50% resource GDP bonus' },
+  heavy_industry: { name: 'Heavy Industry',     branch: 'industry', tier: 2, cost: 200, quarters: 3, prereq: 'resource_ext',
+                    desc: 'Dev alloc GDP boost ×2' },
+  adv_mfg:        { name: 'Adv. Manufacturing', branch: 'industry', tier: 3, cost: 400, quarters: 4, prereq: 'heavy_industry',
+                    desc: 'Military maintenance cost ×0.5' },
+};
 
 // Recruit packs: each costs $50B
 const RECRUIT_PACKS = {
@@ -135,7 +159,10 @@ const GameState = {
   year: 2026,
   quarter: 1,
   paused: true,
-  attackReady: true, // cooldown: one attack per quarter
+  attackReady: true,
+  unlockedTechs:    new Set(),
+  currentResearch:  null,
+  researchProgress: 0,
 
   init() {
     for (const [id, data] of Object.entries(COUNTRY_DATA)) {
@@ -166,11 +193,19 @@ const GameState = {
     const c = this.countries[String(id)];
     if (!c) return 0;
     const u = c.units;
-    return u.infantry + u.tanks * 5 + u.artillery * 8 + u.fighters * 6;
+    const isPlayer = String(id) === this.playerCountryId;
+    let tankMult = 5, artMult = 8;
+    if (isPlayer && this.unlockedTechs.has('armor_doctrine')) { tankMult = 7.5; artMult = 12; }
+    let str = u.infantry + u.tanks * tankMult + u.artillery * artMult + u.fighters * 6;
+    if (isPlayer && this.unlockedTechs.has('tactics')) str = Math.round(str * 1.15);
+    return Math.round(str);
   },
 
   setPlayer(countryId) {
-    this.playerCountryId = String(countryId);
+    this.playerCountryId  = String(countryId);
+    this.unlockedTechs    = new Set();
+    this.currentResearch  = null;
+    this.researchProgress = 0;
     this.paused = false;
     this.updateRelations();
     const c = this.countries[this.playerCountryId];
@@ -289,6 +324,22 @@ const GameState = {
     return true;
   },
 
+  startResearch(techId) {
+    if (!this.playerCountryId) return false;
+    if (this.currentResearch) return false;
+    const tech = TECH_TREE[techId];
+    if (!tech) return false;
+    if (this.unlockedTechs.has(techId)) return false;
+    if (tech.prereq && !this.unlockedTechs.has(tech.prereq)) return false;
+    const player = this.countries[this.playerCountryId];
+    if (player.treasury < tech.cost) return false;
+    player.treasury -= tech.cost;
+    this.currentResearch  = techId;
+    this.researchProgress = 0;
+    Notifications.show(`Research started: <b>${tech.name}</b> — ${tech.quarters} quarters.`, 'info', 5000);
+    return true;
+  },
+
   // Attack: auto-declares war, resolves combat, returns result
   attack(targetId) {
     if (!this.playerCountryId || !this.attackReady) return null;
@@ -360,17 +411,31 @@ const GameState = {
   tickUpdate() {
     this.quarter++;
     if (this.quarter > 4) { this.quarter = 1; this.year++; }
-    this.attackReady = true; // reset attack cooldown each quarter
+    this.attackReady = true;
+
+    // Research progress
+    if (this.currentResearch) {
+      this.researchProgress++;
+      const tech = TECH_TREE[this.currentResearch];
+      if (this.researchProgress >= tech.quarters) {
+        this.unlockedTechs.add(this.currentResearch);
+        Notifications.show(`Research complete: <b>${tech.name}</b>! ${tech.desc}`, 'milestone', 7000);
+        this.currentResearch  = null;
+        this.researchProgress = 0;
+      }
+    }
 
     for (const [id, country] of Object.entries(this.countries)) {
-      const b       = country.budget;
-      const revenue = country.gdp * b.taxRate / 4;
-      const milSpend= revenue * b.militaryAlloc;
-      const devSpend= revenue * b.devAlloc;
+      const b        = country.budget;
+      const isPlayer = id === this.playerCountryId;
+      const revenue  = country.gdp * b.taxRate / 4;
+      const milSpend = revenue * b.militaryAlloc;
+      const devSpend = revenue * b.devAlloc;
       country.treasury += revenue - milSpend - devSpend;
 
       // Military maintenance & recruitment
-      const maintenance = country.military * 0.0012;
+      const maintMult   = (isPlayer && this.unlockedTechs.has('adv_mfg')) ? 0.5 : 1;
+      const maintenance = country.military * 0.0012 * maintMult;
       const milSurplus  = milSpend - maintenance;
       if (milSurplus > 0) {
         const newTroops = milSurplus / 12;
@@ -386,14 +451,22 @@ const GameState = {
         country.units.infantry + country.units.tanks + country.units.artillery + country.units.fighters
       );
 
-      // GDP growth
-      const res      = country.resources;
-      const resBonus = (res.oil + res.food + res.industry) / 250000;
-      const devBoost = b.devAlloc * b.taxRate * 0.04;
-      const warPenalty = id === this.playerCountryId ? country.enemies.length * 0.0025 : 0;
-      const tradeBonus  = country.tradePartners.length * 0.003;
-      const sanctionHit = country.sanctionedBy.length  * 0.005;
+      // GDP growth with tech bonuses
+      const res       = country.resources;
+      const resMult   = (isPlayer && this.unlockedTechs.has('resource_ext')) ? 1.5 : 1;
+      const resBonus  = (res.oil + res.food + res.industry) / 250000 * resMult;
+      const devMult   = (isPlayer && this.unlockedTechs.has('heavy_industry')) ? 2 : 1;
+      const devBoost  = b.devAlloc * b.taxRate * 0.04 * devMult;
+      const warPenalty= isPlayer ? country.enemies.length * 0.0025 : 0;
+      const tradeMult = (isPlayer && this.unlockedTechs.has('trade_networks')) ? 2 : 1;
+      const tradeBonus  = country.tradePartners.length * 0.003 * tradeMult;
+      const sanctionMult= (isPlayer && this.unlockedTechs.has('econ_hegemony')) ? 0.2 : 1;
+      const sanctionHit = country.sanctionedBy.length  * 0.005 * sanctionMult;
       country.gdp *= 1 + Math.max(0.0005, 0.0015 + devBoost + resBonus - warPenalty + tradeBonus - sanctionHit);
+
+      if (isPlayer && this.unlockedTechs.has('banking') && country.treasury > 0) {
+        country.treasury *= 1.005;
+      }
     }
   },
 };

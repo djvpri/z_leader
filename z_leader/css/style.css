@@ -213,6 +213,34 @@ input[type=range]::-webkit-slider-thumb {
 
 input[type=range]::-webkit-slider-thumb:hover { background: #93c5fd; }
 
+/* ── Tech Tree ── */
+.tech-branch       { margin-bottom: 10px; }
+.tech-branch-label { font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+
+.tech-row  { display: flex; gap: 3px; }
+.tech-item {
+  flex: 1; padding: 5px 3px; border-radius: 3px;
+  font-size: 9px; text-align: center; border: 1px solid;
+  line-height: 1.4; transition: all 0.15s;
+}
+.tech-name { font-weight: 700; display: block; }
+.tech-sub  { display: block; margin-top: 2px; }
+
+.tech-locked     { background: #060e18; border-color: #1e3a4a; color: #2d3f55; cursor: default; }
+.tech-available  { background: #0f2133; border-color: #2d5a7a; color: #94a3b8; cursor: pointer; }
+.tech-available:hover { background: #1e3a4a; color: #e2e8f0; }
+.tech-researching{ background: #1a1500; border-color: #ca8a04; color: #fcd34d;
+                   animation: tech-pulse 1.5s ease-in-out infinite; cursor: default; }
+.tech-done       { background: #071a0f; border-color: #14532d; color: #4ade80; cursor: default; }
+
+@keyframes tech-pulse { 0%,100%{opacity:1} 50%{opacity:0.65} }
+
+.tech-current-label { font-size: 11px; color: #94a3b8; margin-bottom: 4px; }
+.tech-current-label span { color: #fcd34d; font-weight: 600; }
+.tech-prog-track  { background: #1e3a4a; height: 5px; border-radius: 3px; overflow: hidden; margin-bottom: 3px; }
+.tech-prog-fill   { height: 100%; background: linear-gradient(90deg, #ca8a04, #fcd34d); border-radius: 3px; transition: width 0.4s; }
+.tech-prog-text   { font-size: 10px; color: #64748b; text-align: right; margin-bottom: 10px; }
+
 /* ── Relations ── */
 #panel-relations { margin-top: 4px; }
 .relations-block { margin-bottom: 12px; }

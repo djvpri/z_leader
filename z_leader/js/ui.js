@@ -211,6 +211,14 @@ const UI = {
       document.getElementById('panel-recruit').style.display = 'none';
     }
 
+    // Tech — player only
+    if (isPlayer) {
+      this._renderTechPanel();
+      document.getElementById('panel-tech').style.display = 'block';
+    } else {
+      document.getElementById('panel-tech').style.display = 'none';
+    }
+
     // Relations — player only
     if (isPlayer) {
       this._renderRelations(c);
@@ -318,6 +326,63 @@ const UI = {
         }).join('');
   },
 
+  _renderTechPanel() {
+    const branches = { military: [], economy: [], industry: [] };
+    for (const [id, tech] of Object.entries(TECH_TREE)) {
+      branches[tech.branch].push({ id, ...tech });
+    }
+
+    for (const [branch, techs] of Object.entries(branches)) {
+      const row = document.getElementById('tech-row-' + branch);
+      if (!row) continue;
+      row.innerHTML = '';
+      techs.sort((a, b) => a.tier - b.tier).forEach(t => {
+        let state;
+        if (GameState.unlockedTechs.has(t.id))                           state = 'done';
+        else if (GameState.currentResearch === t.id)                     state = 'researching';
+        else if (!t.prereq || GameState.unlockedTechs.has(t.prereq))     state = 'available';
+        else                                                              state = 'locked';
+
+        const div = document.createElement('div');
+        div.className = 'tech-item tech-' + state;
+        div.title     = t.desc + (state === 'available' ? ` — $${t.cost}B, ${t.quarters}Q` : '');
+
+        const sub = state === 'done'         ? '✓'
+                  : state === 'researching'  ? `${GameState.researchProgress}/${t.quarters}Q`
+                  : state === 'available'    ? `$${t.cost}B`
+                  :                           '🔒';
+        div.innerHTML = `<span class="tech-name">${t.name}</span><span class="tech-sub">${sub}</span>`;
+
+        if (state === 'available') {
+          div.addEventListener('click', () => {
+            const ok = GameState.startResearch(t.id);
+            if (!ok) {
+              Notifications.show('Cannot start — insufficient treasury or already researching.', 'warning', 4000);
+            } else {
+              this._renderTechPanel();
+              this._updateBudgetSummary();
+            }
+          });
+        }
+        row.appendChild(div);
+      });
+    }
+
+    // Progress bar
+    const prog = document.getElementById('tech-in-progress');
+    if (GameState.currentResearch) {
+      const t = TECH_TREE[GameState.currentResearch];
+      prog.style.display = 'block';
+      document.getElementById('tech-current-name').textContent = t.name;
+      document.getElementById('tech-prog-n').textContent       = GameState.researchProgress;
+      document.getElementById('tech-prog-total').textContent   = t.quarters;
+      document.getElementById('tech-prog-fill').style.width    =
+        Math.round(GameState.researchProgress / t.quarters * 100) + '%';
+    } else {
+      prog.style.display = 'none';
+    }
+  },
+
   hidePanelCountry() {
     document.getElementById('panel-empty').style.display   = 'block';
     document.getElementById('panel-country').style.display = 'none';
@@ -343,6 +408,7 @@ const UI = {
       this._renderMilIntel(p);
       this._updateBudgetSummary();
       this._renderRelations(p);
+      this._renderTechPanel();
     }
 
     // Re-enable attack button when cooldown resets
