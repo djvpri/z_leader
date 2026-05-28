@@ -470,6 +470,65 @@ const GameState = {
     return { revenue, milSpend, devSpend, toTreasury };
   },
 
+  checkVictory() {
+    if (!this.playerCountryId) return null;
+    const player = this.countries[this.playerCountryId];
+    if (!player) return null;
+
+    const annexed = Object.values(this.countries).filter(c => c.occupiedBy === this.playerCountryId).length;
+    const controlled = 1 + annexed;
+
+    if (controlled >= 20) {
+      return { type: 'domination', title: 'World Domination',
+               desc: `You control ${controlled} nations — a true empire spanning the globe.` };
+    }
+    if (player.gdp >= 30000) {
+      return { type: 'economic', title: 'Economic Supremacy',
+               desc: `Your GDP reached $${player.gdp.toFixed(0)}B — the world's dominant economic power.` };
+    }
+    if (player.allies.length >= 8 && player.enemies.length === 0 && this.unlockedTechs.size >= 5) {
+      return { type: 'diplomatic', title: 'Diplomatic Victory',
+               desc: `${player.allies.length} allied nations, zero enemies, ${this.unlockedTechs.size} technologies mastered.` };
+    }
+    return null;
+  },
+
+  save() {
+    try {
+      localStorage.setItem('z_leader_v1', JSON.stringify({
+        v: 1,
+        year:            this.year,
+        quarter:         this.quarter,
+        playerCountryId: this.playerCountryId,
+        unlockedTechs:   [...this.unlockedTechs],
+        currentResearch:  this.currentResearch,
+        researchProgress: this.researchProgress,
+        countries:       JSON.parse(JSON.stringify(this.countries)),
+      }));
+      return true;
+    } catch(e) { return false; }
+  },
+
+  load() {
+    try {
+      const raw = localStorage.getItem('z_leader_v1');
+      if (!raw) return false;
+      const s = JSON.parse(raw);
+      if (s.v !== 1) return false;
+      this.countries        = s.countries;
+      this.year             = s.year;
+      this.quarter          = s.quarter;
+      this.playerCountryId  = s.playerCountryId;
+      this.unlockedTechs    = new Set(s.unlockedTechs);
+      this.currentResearch  = s.currentResearch;
+      this.researchProgress = s.researchProgress;
+      this.paused           = false;
+      this.attackReady      = true;
+      if (this.playerCountryId) this.updateRelations();
+      return true;
+    } catch(e) { return false; }
+  },
+
   tickUpdate() {
     this.quarter++;
     if (this.quarter > 4) { this.quarter = 1; this.year++; }

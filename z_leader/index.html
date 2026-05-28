@@ -26,6 +26,8 @@
           <button id="btn-speed-4" class="speed-btn" onclick="setSpeed(4)">x4</button>
         </div>
         <button id="btn-pause" disabled>Pause</button>
+        <button id="btn-save" title="Save Game" disabled>💾</button>
+        <button id="btn-load" title="Load Game">📂</button>
         <span id="game-date">Year 2026 Q1</span>
       </div>
     </div>
@@ -39,6 +41,10 @@
       <div id="panel-scroll">
         <div id="panel-empty">
           <p>Click on a country to view details</p>
+          <div id="leaderboard">
+            <div class="lb-section-title">Top Nations — Strength</div>
+            <div id="lb-entries"></div>
+          </div>
         </div>
         <div id="panel-country" style="display:none">
           <h2 id="panel-country-name"></h2>
@@ -184,6 +190,16 @@
 
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
+  <div id="victory-modal" style="display:none">
+    <div id="victory-box">
+      <div id="victory-icon">🏆</div>
+      <h2 id="victory-title"></h2>
+      <p id="victory-desc"></p>
+      <p id="victory-time" style="font-size:12px; margin-top:8px;"></p>
+      <button id="btn-victory-close">Continue Playing</button>
+    </div>
+  </div>
+
   <script src="js/notifications.js"></script>
   <script src="js/gameState.js"></script>
   <script src="js/ai.js"></script>

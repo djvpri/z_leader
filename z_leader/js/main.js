@@ -28,11 +28,12 @@ function _startTick() {
 }
 
 // ── Economy & event checks ────────────────────────────────────
-let _prevYear    = 2026;
-let _warnedLow   = false;
+let _prevYear       = 2026;
+let _warnedLow      = false;
 let _warnedBankrupt = false;
-let _prevAllies  = 0;
-let _prevEnemies = 0;
+let _prevAllies     = 0;
+let _prevEnemies    = 0;
+let _victoryShown   = false;
 
 function _checkEvents() {
   const p = GameState.getCountry(GameState.playerCountryId);
@@ -70,6 +71,19 @@ function _checkEvents() {
 
   // Random world event (5% chance per tick)
   if (Math.random() < 0.05) _randomWorldEvent();
+
+  // Victory check
+  if (!_victoryShown) {
+    const v = GameState.checkVictory();
+    if (v) {
+      _victoryShown = true;
+      document.getElementById('victory-title').textContent = v.title;
+      document.getElementById('victory-desc').textContent  = v.desc;
+      document.getElementById('victory-time').textContent  =
+        `Year ${GameState.year} Q${GameState.quarter} — ${GameState.year - 2026} years elapsed`;
+      document.getElementById('victory-modal').style.display = 'flex';
+    }
+  }
 }
 
 const WORLD_EVENTS = [
@@ -101,6 +115,33 @@ window.addEventListener('DOMContentLoaded', () => {
   WorldMap.init();
   UI.init();
 
-  _prevYear    = GameState.year;
+  _prevYear     = GameState.year;
   _gameInterval = _startTick();
+
+  document.getElementById('btn-save').addEventListener('click', () => {
+    if (!GameState.playerCountryId) return;
+    if (GameState.save()) Notifications.show('Game saved.', 'info', 3000);
+  });
+
+  document.getElementById('btn-load').addEventListener('click', () => {
+    if (GameState.load()) {
+      _prevYear    = GameState.year;
+      _warnedLow   = false; _warnedBankrupt = false; _victoryShown = false;
+      const p = GameState.getCountry(GameState.playerCountryId);
+      _prevAllies  = p ? p.allies.length  : 0;
+      _prevEnemies = p ? p.enemies.length : 0;
+      WorldMap.refresh();
+      UI.updateHUD();
+      UI.hidePanelCountry();
+      document.getElementById('start-modal').style.display = 'none';
+      document.getElementById('btn-pause').disabled = false;
+      Notifications.show('Game loaded.', 'info', 4000);
+    } else {
+      Notifications.show('No saved game found.', 'warning', 3000);
+    }
+  });
+
+  document.getElementById('btn-victory-close').addEventListener('click', () => {
+    document.getElementById('victory-modal').style.display = 'none';
+  });
 });

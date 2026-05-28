@@ -26,6 +26,7 @@ const UI = {
       WorldMap.refresh();
       this.updateHUD();
       document.getElementById('btn-pause').disabled = false;
+      document.getElementById('btn-save').disabled  = false;
       document.getElementById('start-modal').style.display = 'none';
       this.showCountryPanel(id);
     });
@@ -406,6 +407,26 @@ const UI = {
   hidePanelCountry() {
     document.getElementById('panel-empty').style.display   = 'block';
     document.getElementById('panel-country').style.display = 'none';
+    this._renderLeaderboard();
+  },
+
+  _renderLeaderboard() {
+    const el = document.getElementById('lb-entries');
+    if (!el) return;
+    const pid = GameState.playerCountryId;
+    const rows = Object.entries(GameState.countries)
+      .filter(([, c]) => !c.occupiedBy)
+      .map(([id, c]) => ({ id, name: c.name, str: GameState.calcStrength(id), isPlayer: id === pid }))
+      .sort((a, b) => b.str - a.str)
+      .slice(0, 12);
+
+    el.innerHTML = rows.map((r, i) =>
+      `<div class="lb-row${r.isPlayer ? ' lb-player' : ''}">` +
+      `<span class="lb-rank">${i + 1}</span>` +
+      `<span class="lb-name">${r.name}</span>` +
+      `<span class="lb-val">${r.str.toLocaleString()}</span>` +
+      `</div>`
+    ).join('');
   },
 
   updateHUD() {
@@ -435,5 +456,8 @@ const UI = {
     if (GameState.attackReady) {
       document.getElementById('btn-attack').disabled = false;
     }
+
+    // Update leaderboard when no country panel open
+    if (!GameState.selectedCountryId) this._renderLeaderboard();
   },
 };

@@ -424,6 +424,45 @@ button:disabled { opacity: 0.4; cursor: default; }
 .notif-year      { border-left-color: #818cf8; background: #0d1020; }
 .notif-event     { border-left-color: #38bdf8; background: #071520; }
 
+/* ── Leaderboard ── */
+#leaderboard { margin-top: 18px; text-align: left; }
+
+.lb-section-title {
+  font-size: 10px; color: #475569; text-transform: uppercase;
+  letter-spacing: 1px; margin-bottom: 8px;
+}
+
+.lb-row {
+  display: flex; align-items: center;
+  padding: 4px 0; border-bottom: 1px solid #111e2d; font-size: 11px;
+}
+.lb-row.lb-player { background: #071a0f; border-radius: 3px; padding: 4px 5px; margin: 1px 0; }
+
+.lb-rank { color: #334155; width: 18px; flex-shrink: 0; font-size: 10px; }
+.lb-name { color: #64748b; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb-val  { color: #fbbf24; font-weight: 600; font-size: 10px; flex-shrink: 0; }
+
+.lb-player .lb-name { color: #4ade80; font-weight: 700; }
+.lb-player .lb-rank { color: #4ade80; }
+
+/* ── Victory Modal ── */
+#victory-modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.82);
+  display: flex; align-items: center; justify-content: center; z-index: 400;
+}
+#victory-box {
+  background: #0a1628; border: 2px solid #fbbf24;
+  border-radius: 10px; padding: 44px 52px; text-align: center; max-width: 420px;
+}
+#victory-icon { font-size: 52px; margin-bottom: 14px; }
+#victory-box h2 { font-size: 26px; color: #fbbf24; letter-spacing: 2px; margin-bottom: 14px; }
+#victory-box p  { color: #94a3b8; margin-bottom: 6px; line-height: 1.6; }
+#btn-victory-close {
+  margin-top: 24px; padding: 10px 30px; font-size: 14px;
+  background: #78350f; border-color: #fbbf24; color: #fcd34d; font-weight: 600;
+}
+#btn-victory-close:hover { background: #92400e; }
+
 /* ── Start Modal ── */
 #start-modal {
   position: fixed; inset: 0; background: rgba(0,0,0,0.7);
