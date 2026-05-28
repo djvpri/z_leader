@@ -254,8 +254,10 @@ body {
 .budget-row label { color: #64748b; }
 .budget-row span  { font-weight: 600; font-size: 12px; }
 
-.pos { color: #4ade80; }
-.neg { color: #f87171; }
+.pos  { color: #4ade80; }
+.neg  { color: #f87171; }
+.warn { color: #fbbf24; }
+.flat { color: #64748b; }
 
 .net-row {
   border-top: 1px solid #1e3a4a;
@@ -577,7 +579,16 @@ button:disabled { opacity: 0.4; cursor: default; }
 .lb-section-title {
   font-size: 10px; color: #475569; text-transform: uppercase;
   letter-spacing: 1px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
 }
+
+.eco-badge {
+  font-size: 10px; font-weight: 700; letter-spacing: 0;
+  padding: 1px 7px; border-radius: 10px; text-transform: none;
+}
+.eco-normal    { background: #1e3a4a; color: #94a3b8; }
+.eco-boom      { background: #14532d; color: #4ade80; }
+.eco-recession { background: #450a0a; color: #f87171; }
 
 .lb-row {
   display: flex; align-items: center;

@@ -422,6 +422,7 @@ const UI = {
     if (!GameState.playerCountryId) return;
     const b = GameState.calcBudget(GameState.playerCountryId);
     if (!b) return;
+    const p   = GameState.getCountry(GameState.playerCountryId);
     const fmt = v => `$${Math.abs(v).toFixed(1)}B`;
     document.getElementById('b-revenue').textContent = '+' + fmt(b.revenue);
     document.getElementById('b-mil').textContent     = '-' + fmt(b.milSpend);
@@ -438,6 +439,24 @@ const UI = {
     if (totalEl) {
       totalEl.textContent = (b.net >= 0 ? '+' : '-') + fmt(b.net);
       totalEl.className   = b.net >= 0 ? 'pos' : 'neg';
+    }
+    // Inflation
+    const inflEl = document.getElementById('b-inflation');
+    if (inflEl && p) {
+      const infl = p.inflation || 0;
+      inflEl.textContent = infl.toFixed(1) + '%';
+      inflEl.className   = infl > 15 ? 'neg' : infl > 8 ? 'warn' : 'pos';
+    }
+    // Debt interest rate
+    const drEl = document.getElementById('b-debtrate');
+    if (drEl && p) {
+      if (p.treasury >= 0) {
+        drEl.textContent = '—'; drEl.className = 'flat';
+      } else {
+        const dr = Math.abs(p.treasury) / Math.max(p.gdp, 1);
+        const rate = dr < 0.5 ? 3 : dr < 1.0 ? 6 : 12;
+        drEl.textContent = rate + '%/yr'; drEl.className = 'neg';
+      }
     }
   },
 
@@ -615,6 +634,15 @@ const UI = {
   },
 
   _renderCommodityMarket() {
+    // Economic cycle badge
+    const cycleEl = document.getElementById('eco-cycle-badge');
+    if (cycleEl) {
+      const ec = GameState._economicCycle || { phase: 'normal', quartersLeft: 0 };
+      const label = ec.phase === 'boom' ? '🚀 Boom' : ec.phase === 'recession' ? '📉 Recession' : '⚖ Normal';
+      cycleEl.textContent = label;
+      cycleEl.className   = 'eco-badge eco-' + ec.phase;
+    }
+
     const COM_CFG = [
       { key: 'oil',      sparkId: 'cm-spark-oil',  trendId: 'cm-trend-oil',  priceId: 'cm-price-oil',  sdId: 'cm-sd-oil'  },
       { key: 'food',     sparkId: 'cm-spark-food', trendId: 'cm-trend-food', priceId: 'cm-price-food', sdId: 'cm-sd-food' },

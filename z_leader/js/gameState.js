@@ -308,6 +308,7 @@ const GameState = {
   commodityPrices: { oil: 1.0, food: 1.0, industry: 1.0, minerals: 1.0, tech: 1.0 },
   priceHistory:    { oil: [1.0], food: [1.0], industry: [1.0], minerals: [1.0], tech: [1.0] },
   _tradeStats:     {},
+  _economicCycle:  { phase: 'normal', quartersLeft: 32 },
 
   init() {
     for (const [id, data] of Object.entries(COUNTRY_DATA)) {
@@ -330,6 +331,7 @@ const GameState = {
         occupiedBy: null,
         leader:     { ...(PRESIDENT_DATA[id] || { title: 'President', name: 'Unknown', trait: 'nationalist' }) },
         factories:  { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 },
+        inflation:  0,
       };
     }
   },
@@ -762,6 +764,7 @@ const GameState = {
         countries:        JSON.parse(JSON.stringify(this.countries)),
         commodityPrices:  { ...this.commodityPrices },
         priceHistory:     JSON.parse(JSON.stringify(this.priceHistory)),
+        economicCycle:    { ...this._economicCycle },
       }));
       return true;
     } catch(e) { return false; }
@@ -784,13 +787,15 @@ const GameState = {
       this.commodityPrices  = { ...defPrices, ...(s.commodityPrices || {}) };
       const defHist = { oil: [1.0], food: [1.0], industry: [1.0], minerals: [1.0], tech: [1.0] };
       this.priceHistory     = { ...defHist, ...(s.priceHistory || {}) };
-      // Patch old saves: add minerals/tech to country resources
+      // Patch old saves
       for (const [id, c] of Object.entries(this.countries)) {
         const rd = RESOURCE_DATA[id] || DEFAULT_RESOURCES;
         if (c.resources.minerals === undefined) c.resources.minerals = rd.minerals || DEFAULT_RESOURCES.minerals;
         if (c.resources.tech     === undefined) c.resources.tech     = rd.tech     || DEFAULT_RESOURCES.tech;
-        if (!c.factories) c.factories = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 };
+        if (!c.factories)             c.factories  = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 };
+        if (c.inflation === undefined) c.inflation = 0;
       }
+      this._economicCycle = s.economicCycle || { phase: 'normal', quartersLeft: 32 };
       this.paused           = false;
       this.attackReady      = true;
       if (this.playerCountryId) this.updateRelations();
@@ -816,6 +821,33 @@ const GameState = {
       }
     }
 
+    // ── Economic cycle management ────────────────────────────
+    if (!this._economicCycle) this._economicCycle = { phase: 'normal', quartersLeft: 32 };
+    this._economicCycle.quartersLeft--;
+    if (this._economicCycle.quartersLeft <= 0) {
+      const prevPhase = this._economicCycle.phase;
+      const roll = Math.random();
+      if (prevPhase === 'normal') {
+        if (roll < 0.25) {
+          this._economicCycle = { phase: 'boom', quartersLeft: 12 + Math.floor(Math.random() * 12) };
+          Notifications.show('Global economic boom — growth accelerates worldwide.', 'milestone', 8000);
+        } else if (roll < 0.50) {
+          this._economicCycle = { phase: 'recession', quartersLeft: 8 + Math.floor(Math.random() * 8) };
+          Notifications.show('Global recession begins — markets contract worldwide.', 'danger', 8000);
+        } else {
+          this._economicCycle.quartersLeft = 20 + Math.floor(Math.random() * 12);
+        }
+      } else {
+        const endMsg = prevPhase === 'boom'
+          ? 'Economic boom winds down — growth normalises.'
+          : 'Recession ends — global recovery underway.';
+        this._economicCycle = { phase: 'normal', quartersLeft: 20 + Math.floor(Math.random() * 12) };
+        Notifications.show(endMsg, 'info', 6000);
+      }
+    }
+    const cycleBonus = this._economicCycle.phase === 'boom' ? 0.0015
+                     : this._economicCycle.phase === 'recession' ? -0.002 : 0;
+
     for (const [id, country] of Object.entries(this.countries)) {
       const b        = country.budget;
       const isPlayer = id === this.playerCountryId;
@@ -824,8 +856,9 @@ const GameState = {
       const revenue  = country.gdp * b.taxRate / 4 + extra;
       const milSpend = revenue * b.militaryAlloc;
       const devSpend = revenue * b.devAlloc;
-      country.treasury += revenue - milSpend - devSpend;
-      country.treasury += this.calcTradeBalance(id).total;
+      const tradeBal = this.calcTradeBalance(id);
+      const netFlow  = revenue - milSpend - devSpend + tradeBal.total;
+      country.treasury += netFlow;
 
       // Military maintenance & recruitment
       const maintMult   = (isPlayer && this.unlockedTechs.has('adv_mfg')) ? 0.5 : 1;
@@ -846,20 +879,72 @@ const GameState = {
       );
 
       // GDP growth with tech bonuses
-      const res       = country.resources;
+      const res          = country.resources;
       const resMult      = (isPlayer && this.unlockedTechs.has('resource_ext')) ? 1.5 : 1;
       const leaderResMult= (leader?.trait === 'industrialist') ? 1.2 : 1;
       const resBonus     = (res.oil + res.food + res.industry) / 250000 * resMult * leaderResMult;
-      const devMult   = (isPlayer && this.unlockedTechs.has('heavy_industry')) ? 2 : 1;
-      const devBoost  = b.devAlloc * b.taxRate * 0.04 * devMult;
+      const devMult      = (isPlayer && this.unlockedTechs.has('heavy_industry')) ? 2 : 1;
+      const devBoost     = b.devAlloc * b.taxRate * 0.04 * devMult;
       const warPenalty   = isPlayer ? country.enemies.length * 0.0025 : 0;
       const sanctionMult = (isPlayer && this.unlockedTechs.has('econ_hegemony')) ? 0.2 : 1;
       const sanctionHit  = country.sanctionedBy.length * 0.005 * sanctionMult;
       const leaderGdpBns = (leader?.trait === 'economist') ? 0.001 : 0;
-      country.gdp *= 1 + Math.max(0.0005, 0.0015 + devBoost + resBonus + leaderGdpBns - warPenalty - sanctionHit);
+
+      // FDI: mitra dagang besar menginvestasikan modal di negara tuan rumah
+      let fdiBonus = 0;
+      for (const tid of country.tradePartners) {
+        const partner = this.countries[tid];
+        if (partner && !partner.occupiedBy) fdiBonus += Math.min(partner.gdp * 0.000006, 0.001);
+      }
+
+      // Energy vulnerability: importir minyak kena penalti GDP saat harga minyak tinggi
+      const oilDeficit    = Math.max(0, 40 - (res.oil || 0));
+      const oilPrice      = this.commodityPrices.oil || 1;
+      const energyPenalty = (oilDeficit > 0 && oilPrice > 1.3)
+        ? (oilDeficit / 40) * (oilPrice - 1.3) * 0.004 : 0;
+      if (isPlayer && newYear && oilPrice > 1.5 && oilDeficit > 10) {
+        Notifications.show('High oil prices are dragging GDP — build Oil Refineries or secure an oil supplier.', 'warning', 6000);
+      }
+
+      const inflPenalty  = (country.inflation || 0) * 0.0002;
+
+      country.gdp *= 1 + Math.max(0.0005,
+        0.0015 + devBoost + resBonus + leaderGdpBns + cycleBonus + fdiBonus
+        - warPenalty - sanctionHit - inflPenalty - energyPenalty
+      );
 
       if (isPlayer && this.unlockedTechs.has('banking') && country.treasury > 0) {
         country.treasury *= 1.005;
+      }
+
+      // Inflasi: naik saat defisit anggaran atau perang, turun saat surplus
+      if (!country.occupiedBy) {
+        const deficitPressure = Math.max(0, -netFlow) / Math.max(country.gdp * 0.25, 1);
+        const warInflBoost    = (country.enemies || []).length > 0 ? 0.3 : 0;
+        const cycleInflBoost  = this._economicCycle.phase === 'boom' ? 0.15 : 0;
+        const inflTarget      = Math.min(25, deficitPressure * 8 + warInflBoost + cycleInflBoost);
+        const prevInfl        = country.inflation || 0;
+        country.inflation     = Math.max(0, prevInfl + (inflTarget - prevInfl) * 0.10);
+        if (isPlayer && country.inflation > 15 && prevInfl <= 15) {
+          Notifications.show(`Inflation at ${country.inflation.toFixed(1)}% — reduce deficit spending to stabilise.`, 'danger', 7000);
+        } else if (isPlayer && country.inflation > 8 && prevInfl <= 8) {
+          Notifications.show(`Inflation rising: ${country.inflation.toFixed(1)}%.`, 'warning', 5000);
+        }
+      }
+
+      // Utang & bunga: treasury negatif = utang, bunga majemuk per kuartal
+      if (country.treasury < 0 && !country.occupiedBy) {
+        const debtRatio  = Math.abs(country.treasury) / Math.max(country.gdp, 1);
+        const annualRate = debtRatio < 0.5 ? 0.03 : debtRatio < 1.0 ? 0.06 : 0.12;
+        country.treasury += country.treasury * (annualRate / 4);
+        // Default berdaulat: utang > 2× GDP
+        if (country.treasury < -country.gdp * 2) {
+          country.tradePartners = [];
+          country.gdp           *= 0.80;
+          country.inflation      = Math.max(country.inflation, 20);
+          country.treasury       = -country.gdp * 0.5;
+          if (isPlayer) Notifications.show('SOVEREIGN DEFAULT — all trade partners fled, GDP crashed 20%, debt restructured.', 'danger', 12000);
+        }
       }
 
       // AI factory building: invest in most-deficient commodity when flush
