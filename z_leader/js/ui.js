@@ -89,6 +89,61 @@ const UI = {
       this._updateBudgetSummary();
     });
 
+    document.getElementById('btn-trade').addEventListener('click', () => {
+      const id = GameState.selectedCountryId;
+      if (!id || id === GameState.playerCountryId) return;
+      const c = GameState.getCountry(id);
+      if (!c) return;
+      if (confirm(`Propose trade agreement with ${c.name}?`)) {
+        GameState.proposeTrade(id);
+        this.showCountryPanel(id);
+        this.updateHUD();
+      }
+    });
+
+    document.getElementById('btn-cancel-trade').addEventListener('click', () => {
+      const id = GameState.selectedCountryId;
+      if (!id || id === GameState.playerCountryId) return;
+      const c = GameState.getCountry(id);
+      if (!c) return;
+      if (confirm(`Cancel trade agreement with ${c.name}?`)) {
+        GameState.cancelTrade(id);
+        Notifications.show(`Trade with <b>${c.name}</b> cancelled.`, 'warning', 4000);
+        this.showCountryPanel(id);
+        this.updateHUD();
+      }
+    });
+
+    document.getElementById('btn-sanction').addEventListener('click', () => {
+      const id = GameState.selectedCountryId;
+      if (!id || id === GameState.playerCountryId) return;
+      const c = GameState.getCountry(id);
+      if (!c) return;
+      if (confirm(`Impose economic sanctions on ${c.name}?`)) {
+        GameState.imposeSanctions(id);
+        this.showCountryPanel(id);
+      }
+    });
+
+    document.getElementById('btn-lift-sanctions').addEventListener('click', () => {
+      const id = GameState.selectedCountryId;
+      if (!id || id === GameState.playerCountryId) return;
+      GameState.liftSanctions(id);
+      this.showCountryPanel(id);
+    });
+
+    document.getElementById('btn-demand-tribute').addEventListener('click', () => {
+      const id = GameState.selectedCountryId;
+      if (!id || id === GameState.playerCountryId) return;
+      const ok = GameState.demandTribute(id);
+      if (!ok) {
+        Notifications.show('Cannot demand tribute — need 2× strength and non-empty treasury.', 'warning', 4000);
+        return;
+      }
+      this.showCountryPanel(id);
+      this.updateHUD();
+    });
+
     // Recruit buttons (event delegation)
     document.getElementById('panel-recruit').addEventListener('click', (e) => {
       const btn = e.target.closest('.recruit-btn');
@@ -164,11 +219,23 @@ const UI = {
       document.getElementById('panel-relations').style.display = 'none';
     }
 
+    // Diplomatic state
+    const player       = hasPlayer ? GameState.getCountry(GameState.playerCountryId) : null;
+    const isTrade      = player && player.tradePartners.includes(sid);
+    const isSanctioning= player && c.sanctionedBy.includes(GameState.playerCountryId);
+    const myStr        = hasPlayer ? GameState.calcStrength(GameState.playerCountryId) : 0;
+    const canTribute   = isEnemy && myStr >= GameState.calcStrength(sid) * 2 && c.treasury > 10;
+
     // Buttons
     document.getElementById('btn-play-as').style.display          = hasPlayer ? 'none' : 'block';
     document.getElementById('btn-attack').style.display           = (hasPlayer && !isPlayer && !isAlly) ? 'block' : 'none';
     document.getElementById('btn-propose-alliance').style.display = (hasPlayer && !isPlayer && !isAlly && !isEnemy) ? 'block' : 'none';
     document.getElementById('btn-make-peace').style.display       = (hasPlayer && !isPlayer && isEnemy) ? 'block' : 'none';
+    document.getElementById('btn-trade').style.display            = (hasPlayer && !isPlayer && !isEnemy && !isTrade) ? 'block' : 'none';
+    document.getElementById('btn-cancel-trade').style.display     = (hasPlayer && !isPlayer && isTrade) ? 'block' : 'none';
+    document.getElementById('btn-sanction').style.display         = (hasPlayer && !isPlayer && !isAlly && !isSanctioning) ? 'block' : 'none';
+    document.getElementById('btn-lift-sanctions').style.display   = (hasPlayer && !isPlayer && isSanctioning) ? 'block' : 'none';
+    document.getElementById('btn-demand-tribute').style.display   = (hasPlayer && canTribute) ? 'block' : 'none';
 
     // Disable attack button if on cooldown
     document.getElementById('btn-attack').disabled = !GameState.attackReady;
@@ -239,6 +306,15 @@ const UI = {
       : p.enemies.map(eid => {
           const e = GameState.getCountry(eid);
           return `<span class="rel-tag enemy">${e ? e.name : '#' + eid}</span>`;
+        }).join('');
+
+    const trade = p.tradePartners || [];
+    document.getElementById('panel-trade-count').textContent  = trade.length;
+    document.getElementById('panel-trade-list').innerHTML = trade.length === 0
+      ? '<span style="color:#334155;font-size:11px">None</span>'
+      : trade.map(tid => {
+          const t = GameState.getCountry(tid);
+          return `<span class="rel-tag trade">${t ? t.name : '#' + tid}</span>`;
         }).join('');
   },
 

@@ -228,7 +228,8 @@ input[type=range]::-webkit-slider-thumb:hover { background: #93c5fd; }
   background: #0f2a18; color: #4ade80;
   border-radius: 10px; padding: 1px 7px; font-size: 10px;
 }
-.rel-count.enemy { background: #2a0f0f; color: #f87171; }
+.rel-count.enemy  { background: #2a0f0f; color: #f87171; }
+.rel-count.trade  { background: #1a1500; color: #fcd34d; }
 
 .relations-list {
   display: flex; flex-wrap: wrap; gap: 4px;
@@ -244,6 +245,8 @@ input[type=range]::-webkit-slider-thumb:hover { background: #93c5fd; }
 .rel-tag:hover { background: #14532d; }
 .rel-tag.enemy { background: #2a0f0f; color: #fca5a5; border-color: #7f1d1d; }
 .rel-tag.enemy:hover { background: #3f0c0c; }
+.rel-tag.trade { background: #1a1500; color: #fcd34d; border-color: #78350f; }
+.rel-tag.trade:hover { background: #292000; }
 
 /* ── Military Intel / Units ── */
 #panel-mil-intel { margin-bottom: 4px; }
@@ -302,6 +305,8 @@ input[type=range]::-webkit-slider-thumb:hover { background: #93c5fd; }
 .action-btn.success:hover { background: #166534; }
 .action-btn.neutral       { background: #334155; color: #cbd5e1; }
 .action-btn.neutral:hover { background: #475569; }
+.action-btn.warning       { background: #78350f; color: #fcd34d; }
+.action-btn.warning:hover { background: #92400e; }
 
 /* ── Generic buttons ── */
 button {

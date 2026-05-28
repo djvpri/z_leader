@@ -28,6 +28,7 @@ const AI = {
     this._attackEnemies(id, c);
     this._declareWar(id, c);
     this._formAlliance(id, c);
+    this._tradeDeals(id, c);
   },
 
   _adjustBudget(c) {
@@ -165,6 +166,25 @@ const AI = {
     }
   },
 
+  _tradeDeals(id, c) {
+    if (Math.random() > 0.010) return;
+    if ((c.tradePartners || []).length >= 3) return;
+
+    const candidates = Object.keys(GameState.countries).filter(tid =>
+      tid !== id &&
+      !c.enemies.includes(tid) &&
+      !(c.tradePartners || []).includes(tid)
+    );
+    if (candidates.length === 0) return;
+
+    const tid    = candidates[Math.floor(Math.random() * candidates.length)];
+    const target = GameState.countries[tid];
+    if (!target) return;
+
+    c.tradePartners = [...new Set([...(c.tradePartners || []), tid])];
+    target.tradePartners = [...new Set([...(target.tradePartners || []), id])];
+  },
+
   _declareWarBetween(id1, id2) {
     const c1 = GameState.countries[id1];
     const c2 = GameState.countries[id2];
@@ -173,6 +193,9 @@ const AI = {
     c1.enemies = [...new Set([...c1.enemies, id2])];
     c2.allies  = c2.allies.filter(x => x !== id1);
     c2.enemies = [...new Set([...c2.enemies, id1])];
+    // Cancel trade on war
+    c1.tradePartners = (c1.tradePartners || []).filter(x => x !== id2);
+    c2.tradePartners = (c2.tradePartners || []).filter(x => x !== id1);
     if (id1 === GameState.playerCountryId || id2 === GameState.playerCountryId) {
       GameState.updateRelations();
     }

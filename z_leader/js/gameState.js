@@ -142,9 +142,11 @@ const GameState = {
       const m = data.military;
       this.countries[id] = {
         ...data,
-        allies:     [],
-        enemies:    [],
-        relation:   'neutral',
+        allies:        [],
+        enemies:       [],
+        tradePartners: [],
+        sanctionedBy:  [],
+        relation:      'neutral',
         resources:  { ...(RESOURCE_DATA[id] || DEFAULT_RESOURCES) },
         budget:     { ...DEFAULT_BUDGET },
         units: {
@@ -196,6 +198,9 @@ const GameState = {
       target.allies  = target.allies.filter(id => id !== this.playerCountryId);
       target.enemies = [...new Set([...target.enemies, this.playerCountryId])];
     }
+    // Cancel trade on war declaration
+    player.tradePartners = player.tradePartners.filter(id => id !== tid);
+    if (target) target.tradePartners = target.tradePartners.filter(id => id !== this.playerCountryId);
     this.updateRelations();
   },
 
@@ -223,6 +228,65 @@ const GameState = {
       Notifications.show(`Peace established with <b>${target.name}</b>.`, 'peace', 6000);
     }
     this.updateRelations();
+  },
+
+  proposeTrade(targetId) {
+    if (!this.playerCountryId) return false;
+    const tid    = String(targetId);
+    const player = this.countries[this.playerCountryId];
+    const target = this.countries[tid];
+    if (!target || player.enemies.includes(tid)) return false;
+    if (player.tradePartners.includes(tid)) return false;
+    player.tradePartners.push(tid);
+    target.tradePartners.push(this.playerCountryId);
+    Notifications.show(`Trade agreement with <b>${target.name}</b> — quarterly GDP bonus active.`, 'alliance', 5000);
+    return true;
+  },
+
+  cancelTrade(targetId) {
+    if (!this.playerCountryId) return;
+    const tid    = String(targetId);
+    const player = this.countries[this.playerCountryId];
+    const target = this.countries[tid];
+    player.tradePartners = player.tradePartners.filter(x => x !== tid);
+    if (target) target.tradePartners = target.tradePartners.filter(x => x !== this.playerCountryId);
+  },
+
+  imposeSanctions(targetId) {
+    if (!this.playerCountryId) return false;
+    const tid    = String(targetId);
+    const target = this.countries[tid];
+    if (!target) return false;
+    target.sanctionedBy = [...new Set([...target.sanctionedBy, this.playerCountryId])];
+    this.cancelTrade(tid);
+    Notifications.show(`Sanctions imposed on <b>${target.name}</b> — their GDP growth penalised.`, 'warning', 5000);
+    return true;
+  },
+
+  liftSanctions(targetId) {
+    if (!this.playerCountryId) return false;
+    const tid    = String(targetId);
+    const target = this.countries[tid];
+    if (!target) return false;
+    target.sanctionedBy = target.sanctionedBy.filter(x => x !== this.playerCountryId);
+    Notifications.show(`Sanctions on <b>${target.name}</b> lifted.`, 'peace', 4000);
+    return true;
+  },
+
+  demandTribute(targetId) {
+    if (!this.playerCountryId) return false;
+    const tid    = String(targetId);
+    const player = this.countries[this.playerCountryId];
+    const target = this.countries[tid];
+    if (!player || !target) return false;
+    if (!player.enemies.includes(tid)) return false;
+    if (this.calcStrength(this.playerCountryId) < this.calcStrength(tid) * 2) return false;
+    if (target.treasury < 10) return false;
+    const amount = Math.max(10, Math.min(target.treasury * 0.25, 500));
+    target.treasury -= amount;
+    player.treasury += amount;
+    Notifications.show(`Tribute from <b>${target.name}</b>: +$${amount.toFixed(0)}B seized.`, 'milestone', 6000);
+    return true;
   },
 
   // Attack: auto-declares war, resolves combat, returns result
@@ -327,7 +391,9 @@ const GameState = {
       const resBonus = (res.oil + res.food + res.industry) / 250000;
       const devBoost = b.devAlloc * b.taxRate * 0.04;
       const warPenalty = id === this.playerCountryId ? country.enemies.length * 0.0025 : 0;
-      country.gdp   *= 1 + Math.max(0.0005, 0.0015 + devBoost + resBonus - warPenalty);
+      const tradeBonus  = country.tradePartners.length * 0.003;
+      const sanctionHit = country.sanctionedBy.length  * 0.005;
+      country.gdp *= 1 + Math.max(0.0005, 0.0015 + devBoost + resBonus - warPenalty + tradeBonus - sanctionHit);
     }
   },
 };
