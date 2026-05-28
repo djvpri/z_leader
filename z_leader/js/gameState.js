@@ -128,6 +128,8 @@ const GameState = {
     this.playerCountryId = String(countryId);
     this.paused = false;
     this.updateRelations();
+    const c = this.countries[this.playerCountryId];
+    if (c) Notifications.show(`You are now leading <b>${c.name}</b>. Good luck!`, 'info', 6000);
   },
 
   updateRelations() {
@@ -155,6 +157,7 @@ const GameState = {
     if (target) {
       target.allies = target.allies.filter(id => id !== this.playerCountryId);
       target.enemies = [...new Set([...target.enemies, this.playerCountryId])];
+      Notifications.show(`War declared on <b>${target.name}</b>! Mobilize your forces.`, 'war', 7000);
     }
     this.updateRelations();
   },
@@ -168,6 +171,7 @@ const GameState = {
     if (target) {
       target.enemies = target.enemies.filter(id => id !== this.playerCountryId);
       target.allies = [...new Set([...target.allies, this.playerCountryId])];
+      Notifications.show(`Alliance formed with <b>${target.name}</b>.`, 'alliance', 6000);
     }
     this.updateRelations();
   },
@@ -177,7 +181,10 @@ const GameState = {
     const player = this.countries[this.playerCountryId];
     player.enemies = player.enemies.filter(id => id !== tid);
     const target = this.countries[tid];
-    if (target) target.enemies = target.enemies.filter(id => id !== this.playerCountryId);
+    if (target) {
+      target.enemies = target.enemies.filter(id => id !== this.playerCountryId);
+      Notifications.show(`Peace established with <b>${target.name}</b>.`, 'peace', 6000);
+    }
     this.updateRelations();
   },
 
