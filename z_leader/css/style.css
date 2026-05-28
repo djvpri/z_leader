@@ -523,6 +523,54 @@ button:disabled { opacity: 0.4; cursor: default; }
 .lb-player .lb-name { color: #4ade80; font-weight: 700; }
 .lb-player .lb-rank { color: #4ade80; }
 
+/* ── Trade Rankings ── */
+#trade-rankings { margin-top: 4px; }
+
+#tr-tabs {
+  display: flex; gap: 4px; margin-bottom: 8px;
+}
+
+.tr-tab {
+  flex: 1; padding: 4px 0; font-size: 10px; font-weight: 600;
+  background: #0f2133; border: 1px solid #1e3a4a; color: #475569;
+  border-radius: 3px; cursor: pointer; transition: all 0.15s;
+}
+.tr-tab:hover  { background: #1e3a4a; color: #94a3b8; }
+.tr-tab.tr-active { background: #1e3a4a; color: #e2e8f0; border-color: #2d5a7a; }
+
+.tr-group-title {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.8px;
+  text-transform: uppercase; padding: 4px 0 3px;
+}
+.tr-group-title.export { color: #4ade80; }
+.tr-group-title.import { color: #f87171; margin-top: 6px; }
+
+.tr-row {
+  display: flex; align-items: center; gap: 5px;
+  padding: 2px 0; font-size: 11px;
+}
+.tr-row.tr-player { font-weight: 700; }
+.tr-row.tr-player .tr-name { color: #4ade80; }
+
+.tr-name {
+  color: #64748b; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; width: 88px; flex-shrink: 0;
+}
+.tr-bar-wrap {
+  flex: 1; height: 4px; background: #1e3a4a;
+  border-radius: 2px; overflow: hidden;
+}
+.tr-bar { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+.tr-bar.export { background: linear-gradient(90deg, #14532d, #4ade80); }
+.tr-bar.import { background: linear-gradient(90deg, #7f1d1d, #f87171); }
+
+.tr-val {
+  font-size: 10px; font-weight: 600;
+  min-width: 48px; text-align: right; flex-shrink: 0;
+}
+.tr-val.export { color: #4ade80; }
+.tr-val.import { color: #f87171; }
+
 /* ── Victory Modal ── */
 #victory-modal {
   position: fixed; inset: 0; background: rgba(0,0,0,0.82);

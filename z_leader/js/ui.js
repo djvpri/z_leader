@@ -1,5 +1,7 @@
 'use strict';
 
+let _tradeCom = 'oil';
+
 const OUTCOME_MSG = {
   decisive: { text: 'Decisive Victory', type: 'war' },
   victory:  { text: 'Victory',          type: 'war' },
@@ -11,6 +13,15 @@ const UI = {
   init() {
     document.getElementById('btn-start-dismiss').addEventListener('click', () => {
       document.getElementById('start-modal').style.display = 'none';
+    });
+
+    document.querySelectorAll('.tr-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tr-tab').forEach(b => b.classList.remove('tr-active'));
+        btn.classList.add('tr-active');
+        _tradeCom = btn.dataset.com;
+        this._renderTradeRankings(_tradeCom);
+      });
     });
 
     document.getElementById('btn-pause').addEventListener('click', () => {
@@ -451,6 +462,7 @@ const UI = {
     document.getElementById('panel-empty').style.display   = 'block';
     document.getElementById('panel-country').style.display = 'none';
     this._renderLeaderboard();
+    this._renderTradeRankings(_tradeCom);
   },
 
   _renderVictoryProgress() {
@@ -492,6 +504,42 @@ const UI = {
     ).join('');
   },
 
+  _renderTradeRankings(commodity) {
+    const el = document.getElementById('tr-list');
+    if (!el) return;
+    const pid = GameState.playerCountryId;
+
+    const rows = Object.entries(GameState.countries)
+      .filter(([, c]) => !c.occupiedBy)
+      .map(([id, c]) => {
+        const tb  = GameState.calcTradeBalance(id);
+        return { id, name: c.name, val: tb[commodity] || 0 };
+      });
+
+    const exporters = rows.filter(r => r.val > 0).sort((a, b) => b.val - a.val).slice(0, 5);
+    const importers = rows.filter(r => r.val < 0).sort((a, b) => a.val - b.val).slice(0, 5);
+    const maxAbs    = Math.max(...rows.map(r => Math.abs(r.val)), 0.01);
+
+    const fmtV = v => (v >= 0 ? '+' : '-') + '$' + Math.abs(v).toFixed(1) + 'B';
+
+    const renderGroup = (title, items, cls) => {
+      if (!items.length) return '';
+      return `<div class="tr-group-title ${cls}">${title}</div>` +
+        items.map(r => {
+          const pct = Math.abs(r.val) / maxAbs * 100;
+          const isP = r.id === pid;
+          return `<div class="tr-row${isP ? ' tr-player' : ''}">` +
+            `<span class="tr-name">${r.name}</span>` +
+            `<div class="tr-bar-wrap"><div class="tr-bar ${cls}" style="width:${pct.toFixed(1)}%"></div></div>` +
+            `<span class="tr-val ${cls}">${fmtV(r.val)}</span>` +
+            `</div>`;
+        }).join('');
+    };
+
+    el.innerHTML = renderGroup('▲ Exporters', exporters, 'export') +
+                   renderGroup('▼ Importers', importers, 'import');
+  },
+
   updateHUD() {
     if (!GameState.playerCountryId) return;
     const p = GameState.getCountry(GameState.playerCountryId);
@@ -522,7 +570,10 @@ const UI = {
       document.getElementById('btn-attack').disabled = false;
     }
 
-    // Update leaderboard when no country panel open
-    if (!GameState.selectedCountryId) this._renderLeaderboard();
+    // Update leaderboard + trade rankings when no country panel open
+    if (!GameState.selectedCountryId) {
+      this._renderLeaderboard();
+      this._renderTradeRankings(_tradeCom);
+    }
   },
 };
