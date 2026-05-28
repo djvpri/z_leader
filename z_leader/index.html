@@ -19,6 +19,11 @@
         <div class="resource">Military: <span id="military">0</span>K</div>
       </div>
       <div id="game-controls">
+        <div id="speed-controls">
+          <button id="btn-speed-1" class="speed-btn active" onclick="setSpeed(1)">x1</button>
+          <button id="btn-speed-2" class="speed-btn" onclick="setSpeed(2)">x2</button>
+          <button id="btn-speed-4" class="speed-btn" onclick="setSpeed(4)">x4</button>
+        </div>
         <button id="btn-pause" disabled>Pause</button>
         <span id="game-date">Year 2026 Q1</span>
       </div>
@@ -30,22 +35,45 @@
     </div>
 
     <div id="info-panel">
-      <div id="panel-empty">
-        <p>Click on a country to view details</p>
-      </div>
-      <div id="panel-country" style="display:none">
-        <h2 id="panel-country-name"></h2>
-        <div class="stat-row"><label>GDP</label><span id="panel-gdp"></span></div>
-        <div class="stat-row"><label>Population</label><span id="panel-population"></span></div>
-        <div class="stat-row"><label>Military</label><span id="panel-military"></span></div>
-        <div class="stat-row"><label>Treasury</label><span id="panel-treasury"></span></div>
-        <div class="stat-row"><label>Status</label><span id="panel-status"></span></div>
-        <div id="panel-actions">
-          <button id="btn-play-as" class="action-btn">Play as this Country</button>
-          <button id="btn-declare-war" class="action-btn danger" style="display:none">Declare War</button>
-          <button id="btn-propose-alliance" class="action-btn success" style="display:none">Propose Alliance</button>
-          <button id="btn-make-peace" class="action-btn neutral" style="display:none">Propose Peace</button>
+      <div id="panel-scroll">
+        <div id="panel-empty">
+          <p>Click on a country to view details</p>
         </div>
+        <div id="panel-country" style="display:none">
+          <h2 id="panel-country-name"></h2>
+          <div class="stat-row"><label>GDP</label><span id="panel-gdp"></span></div>
+          <div class="stat-row"><label>Population</label><span id="panel-population"></span></div>
+          <div class="stat-row"><label>Military</label><span id="panel-military"></span></div>
+          <div class="stat-row"><label>Treasury</label><span id="panel-treasury"></span></div>
+          <div class="stat-row"><label>Status</label><span id="panel-status"></span></div>
+
+          <div id="panel-relations" style="display:none">
+            <div class="relations-block">
+              <div class="relations-header">
+                Allies <span id="panel-allies-count" class="rel-count">0</span>
+              </div>
+              <div id="panel-allies-list" class="relations-list"></div>
+            </div>
+            <div class="relations-block">
+              <div class="relations-header">
+                Enemies <span id="panel-enemies-count" class="rel-count enemy">0</span>
+              </div>
+              <div id="panel-enemies-list" class="relations-list"></div>
+            </div>
+          </div>
+
+          <div id="panel-actions">
+            <button id="btn-play-as" class="action-btn">Play as this Country</button>
+            <button id="btn-declare-war" class="action-btn danger" style="display:none">Declare War</button>
+            <button id="btn-propose-alliance" class="action-btn success" style="display:none">Propose Alliance</button>
+            <button id="btn-make-peace" class="action-btn neutral" style="display:none">Propose Peace</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="event-log">
+        <div id="event-log-header">Event Log</div>
+        <div id="event-log-entries"><div class="log-empty">No events yet.</div></div>
       </div>
     </div>
   </div>

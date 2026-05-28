@@ -72,6 +72,7 @@ const UI = {
       ['panel-gdp','panel-population','panel-military','panel-treasury','panel-status']
         .forEach(el => { document.getElementById(el).textContent = 'N/A'; });
       document.getElementById('panel-actions').style.display = 'none';
+      document.getElementById('panel-relations').style.display = 'none';
       return;
     }
 
@@ -85,14 +86,47 @@ const UI = {
     const statusMap = { player: 'You', ally: 'Ally', enemy: 'Enemy', neutral: 'Neutral' };
     document.getElementById('panel-status').textContent = statusMap[c.relation] || 'Neutral';
 
+    // Relations section — only for player's own country
     const isPlayer = sid === GameState.playerCountryId;
-    const hasPlayer = Boolean(GameState.playerCountryId);
-    const isEnemy = c.relation === 'enemy';
+    if (isPlayer && GameState.playerCountryId) {
+      this._renderRelations(c);
+      document.getElementById('panel-relations').style.display = 'block';
+    } else {
+      document.getElementById('panel-relations').style.display = 'none';
+    }
 
-    document.getElementById('btn-play-as').style.display         = hasPlayer ? 'none' : 'block';
-    document.getElementById('btn-declare-war').style.display     = (hasPlayer && !isPlayer && !isEnemy) ? 'block' : 'none';
-    document.getElementById('btn-propose-alliance').style.display= (hasPlayer && !isPlayer && c.relation !== 'ally') ? 'block' : 'none';
-    document.getElementById('btn-make-peace').style.display      = (hasPlayer && !isPlayer && isEnemy) ? 'block' : 'none';
+    const hasPlayer = Boolean(GameState.playerCountryId);
+    const isEnemy   = c.relation === 'enemy';
+    const isAlly    = c.relation === 'ally';
+
+    document.getElementById('btn-play-as').style.display          = hasPlayer ? 'none' : 'block';
+    document.getElementById('btn-declare-war').style.display      = (hasPlayer && !isPlayer && !isEnemy) ? 'block' : 'none';
+    document.getElementById('btn-propose-alliance').style.display = (hasPlayer && !isPlayer && !isAlly) ? 'block' : 'none';
+    document.getElementById('btn-make-peace').style.display       = (hasPlayer && !isPlayer && isEnemy) ? 'block' : 'none';
+  },
+
+  _renderRelations(playerCountry) {
+    const alliesList  = document.getElementById('panel-allies-list');
+    const enemiesList = document.getElementById('panel-enemies-list');
+
+    document.getElementById('panel-allies-count').textContent  = playerCountry.allies.length;
+    document.getElementById('panel-enemies-count').textContent = playerCountry.enemies.length;
+
+    alliesList.innerHTML = playerCountry.allies.length === 0
+      ? '<span style="color:#334155;font-size:11px">None</span>'
+      : playerCountry.allies.map(aid => {
+          const a = GameState.getCountry(aid);
+          const name = a ? a.name : `#${aid}`;
+          return `<span class="rel-tag" title="${name}">${name}</span>`;
+        }).join('');
+
+    enemiesList.innerHTML = playerCountry.enemies.length === 0
+      ? '<span style="color:#334155;font-size:11px">None</span>'
+      : playerCountry.enemies.map(eid => {
+          const e = GameState.getCountry(eid);
+          const name = e ? e.name : `#${eid}`;
+          return `<span class="rel-tag enemy" title="${name}">${name}</span>`;
+        }).join('');
   },
 
   hidePanelCountry() {
@@ -111,8 +145,9 @@ const UI = {
     document.getElementById('military').textContent   = p.military.toFixed(0);
     document.getElementById('game-date').textContent  = `Year ${GameState.year} Q${GameState.quarter}`;
 
+    // Refresh relations if player's country is open
     if (GameState.selectedCountryId === GameState.playerCountryId) {
-      this.showCountryPanel(GameState.playerCountryId);
+      this._renderRelations(p);
     }
   },
 };
