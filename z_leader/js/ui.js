@@ -182,6 +182,36 @@ const UI = {
       }
     });
 
+    // Inventory buy/sell (event delegation on #inv-list)
+    document.getElementById('inv-list').addEventListener('click', (e) => {
+      const btn = e.target.closest('.inv-btn');
+      if (!btn) return;
+      const com    = btn.dataset.com;
+      const action = btn.dataset.action;
+      const amount = Number(btn.dataset.amount);
+      if (!com || !action || !amount) return;
+
+      if (action === 'buy') {
+        const r = GameState.buyResource(com, amount);
+        if (!r.ok) {
+          Notifications.show(r.msg, 'warning', 4000);
+        } else {
+          Notifications.show(`Bought ${amount} units of <b>${com}</b> for $${r.cost.toFixed(0)}B.`, 'info', 3500);
+          this._renderInventory(GameState.getCountry(GameState.playerCountryId));
+          this.updateHUD();
+        }
+      } else {
+        const r = GameState.sellResource(com, amount);
+        if (!r.ok) {
+          Notifications.show(r.msg, 'warning', 4000);
+        } else {
+          Notifications.show(`Sold ${r.soldAmt} units of <b>${com}</b> for +$${r.revenue.toFixed(0)}B.`, 'milestone', 3500);
+          this._renderInventory(GameState.getCountry(GameState.playerCountryId));
+          this.updateHUD();
+        }
+      }
+    });
+
     // Spy buttons
     document.getElementById('btn-spy-sabotage').addEventListener('click', () => {
       const id = GameState.selectedCountryId; if (!id) return;
@@ -314,13 +344,16 @@ const UI = {
       this._renderBudgetSliders(c);
       this._updateBudgetSummary();
       this._renderBuild(sid, c);
-      document.getElementById('panel-budget').style.display  = 'block';
-      document.getElementById('panel-build').style.display   = 'block';
-      document.getElementById('panel-recruit').style.display = 'block';
+      this._renderInventory(c);
+      document.getElementById('panel-budget').style.display    = 'block';
+      document.getElementById('panel-build').style.display     = 'block';
+      document.getElementById('panel-inventory').style.display = 'block';
+      document.getElementById('panel-recruit').style.display   = 'block';
     } else {
-      document.getElementById('panel-budget').style.display  = 'none';
-      document.getElementById('panel-build').style.display   = 'none';
-      document.getElementById('panel-recruit').style.display = 'none';
+      document.getElementById('panel-budget').style.display    = 'none';
+      document.getElementById('panel-build').style.display     = 'none';
+      document.getElementById('panel-inventory').style.display = 'none';
+      document.getElementById('panel-recruit').style.display   = 'none';
     }
 
     // Tech + Victory Progress — player only
@@ -799,6 +832,52 @@ const UI = {
     }).join('');
   },
 
+  _renderInventory(c) {
+    const el = document.getElementById('inv-list');
+    if (!el || !c) return;
+    const stock  = c.stockpile || {};
+    const prices = GameState.commodityPrices;
+
+    const COM_CFG = [
+      { com: 'oil',      icon: '🛢', label: 'Oil',      effect: '🛡 Buffers energy costs at 50+' },
+      { com: 'food',     icon: '🌾', label: 'Food',     effect: '⚖ Stability cushion at 50+' },
+      { com: 'industry', icon: '⚙',  label: 'Industry', effect: '' },
+      { com: 'minerals', icon: '⛏',  label: 'Minerals', effect: '' },
+      { com: 'tech',     icon: '💻', label: 'Tech',     effect: '' },
+    ];
+
+    el.innerHTML = COM_CFG.map(({ com, icon, label, effect }) => {
+      const amt       = Math.round(stock[com] || 0);
+      const unitPrice = (prices[com] || 1) * 2;
+      const cost10    = (10 * unitPrice).toFixed(0);
+      const rev10     = (Math.min(10, amt) * unitPrice).toFixed(0);
+      const cost50    = (50 * unitPrice).toFixed(0);
+      const rev50     = (Math.min(50, amt) * unitPrice).toFixed(0);
+      const barPct    = Math.min(100, amt / 2);  // visual: 200 units = full bar
+      const isLow     = amt < 10;
+      const isHigh    = com === 'oil' ? amt >= 150 : amt >= 50;
+
+      return `<div class="inv-row">
+        <div class="inv-top">
+          <span class="inv-icon">${icon}</span>
+          <span class="inv-label">${label}</span>
+          ${isHigh && effect ? `<span class="inv-effect-badge">${effect}</span>` : ''}
+          <span class="inv-amt ${isLow ? 'inv-low' : isHigh ? 'inv-high' : ''}">${amt}u</span>
+        </div>
+        <div class="inv-bar-wrap">
+          <div class="inv-bar" style="width:${barPct}%"></div>
+        </div>
+        <div class="inv-actions">
+          <span class="inv-price-label">$${unitPrice.toFixed(1)}B/unit</span>
+          <button class="inv-btn inv-buy"  data-com="${com}" data-action="buy"  data-amount="10"  ${c.treasury < cost10 * 1 ? 'disabled' : ''}>Buy 10 <span class="inv-cost">-$${cost10}B</span></button>
+          <button class="inv-btn inv-buy"  data-com="${com}" data-action="buy"  data-amount="50"  ${c.treasury < cost50 * 1 ? 'disabled' : ''}>Buy 50 <span class="inv-cost">-$${cost50}B</span></button>
+          <button class="inv-btn inv-sell" data-com="${com}" data-action="sell" data-amount="10"  ${amt < 10 ? 'disabled' : ''}>Sell 10 <span class="inv-rev">+$${rev10}B</span></button>
+          <button class="inv-btn inv-sell" data-com="${com}" data-action="sell" data-amount="50"  ${amt < 50 ? 'disabled' : ''}>Sell 50 <span class="inv-rev">+$${rev50}B</span></button>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
   _renderStability(id, c) {
     const stab   = c.stability || 70;
     const fillEl = document.getElementById('stab-fill');
@@ -931,6 +1010,7 @@ const UI = {
       this._renderMilIntel(p);
       this._renderStability(GameState.playerCountryId, p);
       this._renderProductionChains(GameState.playerCountryId);
+      this._renderInventory(p);
       this._renderTrade(GameState.playerCountryId, p);
       this._updateBudgetSummary();
       this._renderRelations(p);

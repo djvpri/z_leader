@@ -382,6 +382,7 @@ const GameState = {
         occupiedBy: null,
         leader:     { ...(PRESIDENT_DATA[id] || { title: 'President', name: 'Unknown', trait: 'nationalist' }) },
         factories:  { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 },
+        stockpile:  { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 },
         inflation:  0,
         stability:  70,
         gdpHistory: [],
@@ -579,6 +580,15 @@ const GameState = {
     pRes.oil      = Math.min(100, pRes.oil      + Math.round(tRes.oil      * 0.30));
     pRes.food     = Math.min(100, pRes.food     + Math.round(tRes.food     * 0.30));
     pRes.industry = Math.min(100, pRes.industry + Math.round(tRes.industry * 0.30));
+
+    // Partial stockpile absorption
+    if (!player.stockpile) player.stockpile = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 };
+    if (target.stockpile) {
+      for (const com of ['oil', 'food', 'industry', 'minerals', 'tech']) {
+        player.stockpile[com] = Math.min(1000,
+          (player.stockpile[com] || 0) + Math.round((target.stockpile[com] || 0) * 0.40));
+      }
+    }
 
     // Mark territory and strip it
     target.occupiedBy    = this.playerCountryId;
@@ -838,6 +848,49 @@ const GameState = {
     });
   },
 
+  // Price per unit: commodityPrice × 2B
+  _stockpileUnitPrice(commodity) {
+    return (this.commodityPrices[commodity] || 1) * 2;
+  },
+
+  buyResource(commodity, amount) {
+    if (!this.playerCountryId) return { ok: false, msg: 'No player.' };
+    const p = this.countries[this.playerCountryId];
+    if (!p) return { ok: false, msg: 'No country.' };
+    if (!p.stockpile) p.stockpile = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 };
+    const unitPrice = this._stockpileUnitPrice(commodity);
+    const cost      = amount * unitPrice;
+    if (p.treasury < cost)
+      return { ok: false, msg: `Need $${cost.toFixed(0)}B — only $${p.treasury.toFixed(0)}B available.` };
+    if ((p.stockpile[commodity] || 0) + amount > 1000)
+      return { ok: false, msg: 'Stockpile full (max 1000 units per commodity).' };
+    p.treasury -= cost;
+    p.stockpile[commodity] = (p.stockpile[commodity] || 0) + amount;
+    // Buying pushes market price up slightly
+    this.commodityPrices[commodity] = Math.min(2.5,
+      this.commodityPrices[commodity] * (1 + amount * 0.0003));
+    return { ok: true, cost, unitPrice };
+  },
+
+  sellResource(commodity, amount) {
+    if (!this.playerCountryId) return { ok: false, msg: 'No player.' };
+    const p = this.countries[this.playerCountryId];
+    if (!p) return { ok: false, msg: 'No country.' };
+    if (!p.stockpile) p.stockpile = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 };
+    const stock = p.stockpile[commodity] || 0;
+    const sellAmt = Math.min(amount, stock);
+    if (sellAmt <= 0)
+      return { ok: false, msg: 'No stockpile to sell.' };
+    const unitPrice = this._stockpileUnitPrice(commodity);
+    const revenue   = sellAmt * unitPrice;
+    p.stockpile[commodity] = stock - sellAmt;
+    p.treasury += revenue;
+    // Selling pushes market price down slightly
+    this.commodityPrices[commodity] = Math.max(0.35,
+      this.commodityPrices[commodity] * (1 - sellAmt * 0.0003));
+    return { ok: true, revenue, soldAmt: sellAmt, unitPrice };
+  },
+
   doSpy(targetId, operation) {
     if (!this.playerCountryId) return { ok: false, msg: 'No player.' };
     const player = this.countries[this.playerCountryId];
@@ -855,7 +908,20 @@ const GameState = {
         const com = coms[Math.floor(Math.random() * coms.length)];
         target.factories[com]--;
         target.resources[com] = Math.max(0, (target.resources[com] || 0) - 20);
+        // Also destroy part of their stockpile for that commodity
+        if (target.stockpile?.[com] > 0) {
+          const stockLoss = Math.round((target.stockpile[com] || 0) * 0.35);
+          target.stockpile[com] = Math.max(0, (target.stockpile[com] || 0) - stockLoss);
+        }
         return { ok: true, msg: `Sabotage succeeded — ${com} facility in <b>${target.name}</b> destroyed.` };
+      }
+      // No factories — target their stockpile instead
+      const stockComs = ['oil','food','industry','minerals','tech'].filter(c => (target.stockpile?.[c] || 0) > 20);
+      if (stockComs.length > 0) {
+        const com = stockComs[Math.floor(Math.random() * stockComs.length)];
+        const destroyed = Math.round((target.stockpile[com] || 0) * 0.40);
+        target.stockpile[com] = Math.max(0, (target.stockpile[com] || 0) - destroyed);
+        return { ok: true, msg: `Stockpile sabotaged — ${destroyed} units of ${com} destroyed in <b>${target.name}</b>.` };
       }
       const com = ['oil','food','industry'][Math.floor(Math.random() * 3)];
       target.resources[com] = Math.max(5, (target.resources[com] || 20) * 0.85);
@@ -974,6 +1040,7 @@ const GameState = {
         if (c.resources.minerals === undefined) c.resources.minerals = rd.minerals || DEFAULT_RESOURCES.minerals;
         if (c.resources.tech     === undefined) c.resources.tech     = rd.tech     || DEFAULT_RESOURCES.tech;
         if (!c.factories)             c.factories  = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 };
+        if (!c.stockpile)             c.stockpile  = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 };
         if (c.inflation  === undefined) c.inflation  = 0;
         if (c.stability  === undefined) c.stability  = 70;
         if (!c.gdpHistory)              c.gdpHistory = [];
@@ -1066,6 +1133,19 @@ const GameState = {
         if (ch.bonuses.researchSpeed)     chainResearchSpd  += ch.bonuses.researchSpeed;
       }
 
+      // ── Stockpile accumulation / depletion ───────────────────
+      if (!country.occupiedBy) {
+        if (!country.stockpile) country.stockpile = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 };
+        for (const com of ['oil', 'food', 'industry', 'minerals', 'tech']) {
+          const net = (country.resources[com] || 0) - 40;
+          if (net > 0) {
+            country.stockpile[com] = Math.min(1000, (country.stockpile[com] || 0) + net * 0.4);
+          } else {
+            country.stockpile[com] = Math.max(0, (country.stockpile[com] || 0) + net * 0.25);
+          }
+        }
+      }
+
       // Military maintenance & recruitment
       const maintMult   = (isPlayer && this.unlockedTechs.has('adv_mfg')) ? 0.5 : 1;
       const maintenance = country.military * 0.0012 * maintMult * chainMilMaintMult;
@@ -1094,6 +1174,8 @@ const GameState = {
         sd -= (country.sanctionedBy || []).length * 0.20;
         if (netFlow > 0) sd += 0.30;
         if ((country.enemies || []).length === 0) sd += 0.20;
+        // Food stockpile provides stability cushion during high food prices
+        if ((country.stockpile?.food || 0) >= 50 && (this.commodityPrices.food || 1) > 1.2) sd += 0.40;
         country.stability = Math.max(0, Math.min(100, country.stability + sd + chainStabilityQ));
         if (isPlayer && country.stability < 30 && Math.random() < 0.04) {
           Notifications.show(`Stability critical: ${Math.round(country.stability)} — unrest threatens the government.`, 'danger', 7000);
@@ -1131,12 +1213,15 @@ const GameState = {
       }
 
       // Energy vulnerability: importir minyak kena penalti GDP saat harga minyak tinggi
+      // Oil stockpile buffers this penalty
       const oilDeficit    = Math.max(0, 40 - (res.oil || 0));
       const oilPrice      = this.commodityPrices.oil || 1;
+      const oilStock      = country.stockpile?.oil || 0;
+      const stockBuffer   = oilStock >= 150 ? 0 : oilStock >= 50 ? 0.5 : 1.0;
       const energyPenalty = (oilDeficit > 0 && oilPrice > 1.3)
-        ? (oilDeficit / 40) * (oilPrice - 1.3) * 0.004 : 0;
-      if (isPlayer && newYear && oilPrice > 1.5 && oilDeficit > 10) {
-        Notifications.show('High oil prices are dragging GDP — build Oil Refineries or secure an oil supplier.', 'warning', 6000);
+        ? (oilDeficit / 40) * (oilPrice - 1.3) * 0.004 * stockBuffer : 0;
+      if (isPlayer && newYear && oilPrice > 1.5 && oilDeficit > 10 && oilStock < 50) {
+        Notifications.show('High oil prices are dragging GDP — build refineries, buy oil stockpile, or secure a supplier.', 'warning', 6000);
       }
 
       const inflPenalty  = (country.inflation || 0) * 0.0002;
