@@ -20,6 +20,8 @@ function _startTick() {
   return setInterval(() => {
     if (GameState.paused || !GameState.playerCountryId) return;
     GameState.tickUpdate();
+    AI.tick();
+    WorldMap.refresh();
     UI.updateHUD();
     _checkEvents();
   }, _tickMs);
