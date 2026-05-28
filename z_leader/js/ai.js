@@ -61,8 +61,12 @@ const AI = {
     const pid = GameState.playerCountryId;
     if (id === pid || eid === pid) {
       Notifications.show(`<b>${c.name}</b> proposes peace — you are no longer at war.`, 'peace', 6000);
+      WorldNews.add(`${c.name} and ${enemy.name} sign a peace agreement.`);
     } else {
       this._notify(`<b>${c.name}</b> signs peace with <b>${enemy.name}</b>.`, 'peace');
+      if (MAJOR_POWER_IDS.has(id) || MAJOR_POWER_IDS.has(eid)) {
+        WorldNews.add(`${c.name} and ${enemy.name} end hostilities.`);
+      }
     }
   },
 
@@ -107,6 +111,9 @@ const AI = {
         if (Math.random() < 0.20) {
           this._notify(`<b>${atk.name}</b> strikes <b>${def.name}</b>. ${outcome}.`, 'war');
         }
+        if (outcome === 'decisive' || outcome === 'victory') {
+          WorldNews.add(`${atk.name} forces advance against ${def.name} — ${outcome}.`);
+        }
       }
     }
   },
@@ -142,9 +149,11 @@ const AI = {
     const pid = GameState.playerCountryId;
     if (chosen.tid === pid) {
       Notifications.show(`<b>${c.name}</b> declared war on you!`, 'war', 9000);
+      WorldNews.add(`${c.name} declares war on ${target.name}!`);
     } else if (id !== pid) {
       if (MAJOR_POWER_IDS.has(id) || MAJOR_POWER_IDS.has(chosen.tid) || Math.random() < 0.15) {
         this._notify(`<b>${c.name}</b> declares war on <b>${target.name}</b>!`, 'war', 5000);
+        WorldNews.add(`${c.name} declares war on ${target.name}!`);
       }
     }
   },
@@ -168,6 +177,9 @@ const AI = {
 
     if (MAJOR_POWER_IDS.has(id) || MAJOR_POWER_IDS.has(tid) || Math.random() < 0.12) {
       this._notify(`<b>${c.name}</b> forms alliance with <b>${target.name}</b>.`, 'alliance');
+      if (MAJOR_POWER_IDS.has(id) || MAJOR_POWER_IDS.has(tid)) {
+        WorldNews.add(`${c.name} and ${target.name} forge a new alliance.`);
+      }
     }
   },
 

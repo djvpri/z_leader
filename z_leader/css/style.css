@@ -714,3 +714,128 @@ button:disabled { opacity: 0.4; cursor: default; }
   background: #166534; border-color: #4ade80; color: #4ade80;
 }
 #btn-start-dismiss:hover { background: #14532d; }
+
+/* ── Map Mode Buttons ── */
+#map-modes { display: flex; gap: 3px; }
+
+.map-mode-btn {
+  padding: 3px 8px; font-size: 12px;
+  background: #0f2133; border: 1px solid #1e3a4a;
+  color: #475569; border-radius: 3px;
+  cursor: pointer; transition: all 0.15s;
+}
+.map-mode-btn:hover  { background: #1e3a4a; color: #94a3b8; }
+.map-mode-btn.active { background: #1a3a1a; color: #4ade80; border-color: #14532d; }
+
+/* ── Stability Bar ── */
+#panel-stability { margin-bottom: 4px; }
+
+.stab-bar-wrap {
+  display: flex; align-items: center; gap: 8px; margin: 6px 0;
+}
+.stab-track {
+  flex: 1; height: 7px; background: #1e3a4a;
+  border-radius: 4px; overflow: hidden;
+}
+.stab-fill {
+  height: 100%; border-radius: 4px; transition: width 0.4s ease;
+}
+.stab-high { background: linear-gradient(90deg, #166534, #4ade80); }
+.stab-mid  { background: linear-gradient(90deg, #78350f, #fbbf24); }
+.stab-low  { background: linear-gradient(90deg, #7f1d1d, #f87171); }
+.stab-val  { font-size: 11px; font-weight: 700; color: #e2e8f0; width: 24px; text-align: right; flex-shrink: 0; }
+
+.stab-status { font-size: 10px; margin-bottom: 4px; }
+.stab-ok   { color: #4ade80; }
+.stab-warn { color: #fbbf24; }
+.stab-crit { color: #f87171; font-weight: 700; }
+
+/* ── Trade Block Badges ── */
+.block-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; margin-bottom: 2px; }
+
+.block-badge {
+  background: #0f1f33; border: 1px solid #1e4a7a;
+  color: #60a5fa; font-size: 9px; font-weight: 600;
+  padding: 2px 6px; border-radius: 10px;
+  white-space: nowrap; cursor: default;
+}
+
+/* ── Espionage ── */
+#panel-spy { margin-bottom: 4px; }
+
+.spy-btn {
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; margin-bottom: 6px;
+  padding: 7px 12px;
+  background: #1a0a00; border: 1px solid #7c2d12;
+  color: #fdba74; border-radius: 4px;
+  cursor: pointer; font-size: 11px; font-weight: 600;
+  transition: background 0.15s;
+}
+.spy-btn:hover    { background: #2a1000; }
+.spy-btn:disabled { opacity: 0.4; cursor: default; }
+.spy-cost { color: #78350f; font-size: 10px; font-weight: 400; }
+
+/* ── Charts Modal ── */
+#charts-modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.82);
+  display: flex; align-items: center; justify-content: center; z-index: 400;
+}
+#charts-box {
+  background: #0a1628; border: 1px solid #1e3a4a;
+  border-radius: 8px; padding: 0; width: 600px; max-width: 95vw;
+}
+#charts-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; border-bottom: 1px solid #1e3a4a;
+  font-size: 13px; font-weight: 700; color: #e2e8f0;
+}
+#btn-charts-close {
+  background: none; border: none; color: #475569;
+  font-size: 14px; padding: 0 4px; cursor: pointer;
+}
+#btn-charts-close:hover { color: #94a3b8; background: none; }
+#charts-canvas {
+  display: block; width: 100%; height: auto;
+  border-bottom: 1px solid #1e3a4a;
+}
+#charts-legend {
+  padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px;
+}
+.chart-legend-item {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; color: #94a3b8;
+}
+.chart-legend-dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+
+/* ── News Ticker ── */
+#news-ticker {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 26px; background: #060e18;
+  border-top: 1px solid #1e3a4a;
+  display: flex; align-items: center;
+  z-index: 150; overflow: hidden;
+}
+.ticker-label {
+  background: #1e3a4a; color: #60a5fa;
+  font-size: 9px; font-weight: 700; letter-spacing: 1px;
+  padding: 0 10px; height: 100%;
+  display: flex; align-items: center; flex-shrink: 0;
+  border-right: 1px solid #2d5a7a;
+}
+#ticker-track { flex: 1; overflow: hidden; height: 100%; position: relative; }
+#ticker-inner {
+  display: inline-block; white-space: nowrap;
+  font-size: 11px; color: #64748b;
+  padding-left: 100%;
+  animation: ticker-scroll 60s linear infinite;
+}
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
+}
+
+/* Shift notifications above ticker */
+#notifications { bottom: 42px; }

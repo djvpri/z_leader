@@ -182,6 +182,35 @@ const UI = {
       }
     });
 
+    // Spy buttons
+    document.getElementById('btn-spy-sabotage').addEventListener('click', () => {
+      const id = GameState.selectedCountryId; if (!id) return;
+      const r = GameState.doSpy(id, 'sabotage');
+      Notifications.show(r.success ? `Sabotage successful on <b>${r.name}</b>!` : `Sabotage operation failed.`, r.success ? 'milestone' : 'warning', 4000);
+      this.showCountryPanel(id); this.updateHUD();
+    });
+    document.getElementById('btn-spy-unrest').addEventListener('click', () => {
+      const id = GameState.selectedCountryId; if (!id) return;
+      const r = GameState.doSpy(id, 'unrest');
+      Notifications.show(r.success ? `Civil unrest incited in <b>${r.name}</b>!` : `Operation failed — agent compromised.`, r.success ? 'milestone' : 'warning', 4000);
+      this.showCountryPanel(id);
+    });
+    document.getElementById('btn-spy-tech').addEventListener('click', () => {
+      const id = GameState.selectedCountryId; if (!id) return;
+      const r = GameState.doSpy(id, 'steal_tech');
+      Notifications.show(r.success ? `Technology stolen from <b>${r.name}</b>! GDP bonus gained.` : `Tech theft failed.`, r.success ? 'milestone' : 'warning', 4000);
+      this.showCountryPanel(id); this.updateHUD();
+    });
+
+    // Charts modal
+    document.getElementById('btn-charts').addEventListener('click', () => {
+      document.getElementById('charts-modal').style.display = 'flex';
+      this._renderCharts();
+    });
+    document.getElementById('btn-charts-close').addEventListener('click', () => {
+      document.getElementById('charts-modal').style.display = 'none';
+    });
+
     // Build buttons
     const BUILD_LABELS = { oil: 'Oil Refinery', food: 'Agri Complex', industry: 'Industrial Zone', minerals: 'Mineral Mine', tech: 'Tech Hub' };
     ['oil', 'food', 'industry', 'minerals', 'tech'].forEach(com => {
@@ -260,6 +289,10 @@ const UI = {
     document.getElementById('panel-mil-intel').style.display = 'block';
     this._renderMilIntel(c);
 
+    // Stability + blocks — always visible
+    this._renderStability(sid, c);
+    this._renderBlocks(sid);
+
     // Resources — always visible
     this._renderResources(c);
 
@@ -270,6 +303,10 @@ const UI = {
     const hasPlayer = Boolean(GameState.playerCountryId);
     const isEnemy   = c.relation === 'enemy';
     const isAlly    = c.relation === 'ally';
+
+    // Espionage — non-player countries when player exists and not an ally
+    const showSpy = hasPlayer && !isPlayer && !isTerritory && c.relation !== 'ally';
+    document.getElementById('panel-spy').style.display = showSpy ? 'block' : 'none';
 
     // Budget + Build + Recruit — player only
     if (isPlayer) {
@@ -720,6 +757,118 @@ const UI = {
                    renderGroup('▼ Importers', importers, 'import');
   },
 
+  _renderStability(id, c) {
+    const stab   = c.stability || 70;
+    const fillEl = document.getElementById('stab-fill');
+    const valEl  = document.getElementById('stab-val');
+    const statEl = document.getElementById('stab-status');
+    if (!fillEl) return;
+    fillEl.style.width = Math.max(0, Math.min(100, stab)) + '%';
+    fillEl.className   = 'stab-fill ' + (stab >= 70 ? 'stab-high' : stab >= 40 ? 'stab-mid' : 'stab-low');
+    if (valEl) valEl.textContent = Math.round(stab);
+    if (statEl) {
+      const label = stab >= 80 ? 'Stable' : stab >= 60 ? 'Normal' : stab >= 40 ? 'Unstable' : stab >= 20 ? 'Volatile' : 'Crisis';
+      const cls   = stab >= 60 ? 'stab-ok' : stab >= 40 ? 'stab-warn' : 'stab-crit';
+      statEl.textContent = label;
+      statEl.className   = 'stab-status ' + cls;
+    }
+  },
+
+  _renderBlocks(id) {
+    const el = document.getElementById('panel-blocks');
+    if (!el) return;
+    const blocks = GameState.getCountryBlocks ? GameState.getCountryBlocks(id) : [];
+    if (!blocks || blocks.length === 0) { el.innerHTML = ''; return; }
+    el.innerHTML = blocks.map(b => {
+      const tip = b.bonus.commodity === 'all'
+        ? `+${(b.bonus.rate * 100) | 0}% all trade`
+        : `+${(b.bonus.rate * 100) | 0}% ${b.bonus.commodity}`;
+      return `<span class="block-badge" title="${tip}">${b.icon} ${b.name}</span>`;
+    }).join('');
+  },
+
+  _renderCharts() {
+    const canvas = document.getElementById('charts-canvas');
+    const legend = document.getElementById('charts-legend');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+    const PAD = { top: 16, right: 16, bottom: 36, left: 60 };
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0d1f2d';
+    ctx.fillRect(0, 0, W, H);
+
+    const pid = GameState.playerCountryId;
+    const valid = Object.entries(GameState.countries)
+      .filter(([, c]) => !c.occupiedBy && c.gdpHistory && c.gdpHistory.length > 1)
+      .map(([id, c]) => ({ id, c }));
+
+    const top5 = valid.filter(x => x.id !== pid).sort((a, b) => b.c.gdp - a.c.gdp).slice(0, 5);
+    const subjects = pid && GameState.getCountry(pid) ? [{ id: pid, c: GameState.getCountry(pid) }, ...top5] : top5;
+
+    const COLORS = ['#4ade80','#60a5fa','#f87171','#fbbf24','#c084fc','#38bdf8'];
+    let maxLen = 0, minGdp = Infinity, maxGdp = 0;
+    subjects.forEach(({ c }) => {
+      if (!c || !c.gdpHistory) return;
+      maxLen = Math.max(maxLen, c.gdpHistory.length);
+      c.gdpHistory.forEach(v => { minGdp = Math.min(minGdp, v); maxGdp = Math.max(maxGdp, v); });
+    });
+
+    if (maxLen < 2) {
+      ctx.fillStyle = '#475569'; ctx.font = '13px sans-serif'; ctx.textAlign = 'left';
+      ctx.fillText('Not enough data yet. Wait a few quarters.', PAD.left + 8, H / 2);
+      if (legend) legend.innerHTML = '';
+      return;
+    }
+
+    minGdp = Math.max(0, minGdp * 0.9);
+    maxGdp = maxGdp * 1.05;
+    const gRange = maxGdp - minGdp || 1;
+    const chartW = W - PAD.left - PAD.right;
+    const chartH = H - PAD.top  - PAD.bottom;
+
+    // Grid lines + Y labels
+    for (let g = 0; g <= 4; g++) {
+      const y = PAD.top + (1 - g / 4) * chartH;
+      ctx.strokeStyle = '#1e3548'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(W - PAD.right, y); ctx.stroke();
+      const v = minGdp + gRange * (g / 4);
+      const lbl = v >= 1000 ? (v / 1000).toFixed(1) + 'T' : Math.round(v) + 'B';
+      ctx.fillStyle = '#475569'; ctx.font = '10px sans-serif'; ctx.textAlign = 'right';
+      ctx.fillText('$' + lbl, PAD.left - 4, y + 4);
+    }
+
+    // Lines
+    subjects.forEach(({ id, c }, i) => {
+      if (!c || !c.gdpHistory || c.gdpHistory.length < 2) return;
+      ctx.strokeStyle = COLORS[i % COLORS.length];
+      ctx.lineWidth   = id === pid ? 2.5 : 1.5;
+      ctx.beginPath();
+      c.gdpHistory.forEach((v, j) => {
+        const x = PAD.left + (j / (maxLen - 1)) * chartW;
+        const y = PAD.top  + (1 - (v - minGdp) / gRange) * chartH;
+        j === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    });
+
+    // X labels
+    const startYr = GameState.year - Math.floor(maxLen / 4);
+    ctx.fillStyle = '#475569'; ctx.font = '10px sans-serif';
+    ctx.textAlign = 'left';  ctx.fillText(String(startYr), PAD.left, H - 6);
+    ctx.textAlign = 'right'; ctx.fillText(String(GameState.year), W - PAD.right, H - 6);
+
+    // Legend
+    if (legend) {
+      legend.innerHTML = subjects.map(({ id, c }, i) => {
+        if (!c) return '';
+        const mark = id === pid ? ' (You)' : '';
+        return `<span class="chart-legend-item"><span class="chart-legend-dot" style="background:${COLORS[i % COLORS.length]}"></span>${c.name}${mark}</span>`;
+      }).join('');
+    }
+  },
+
   updateHUD() {
     if (!GameState.playerCountryId) return;
     const p = GameState.getCountry(GameState.playerCountryId);
@@ -738,6 +887,7 @@ const UI = {
       document.getElementById('panel-treasury').textContent = `$${p.treasury.toFixed(0)}B`;
       document.getElementById('panel-military').textContent = `${p.military.toFixed(0)}K`;
       this._renderMilIntel(p);
+      this._renderStability(GameState.playerCountryId, p);
       this._renderTrade(GameState.playerCountryId, p);
       this._updateBudgetSummary();
       this._renderRelations(p);

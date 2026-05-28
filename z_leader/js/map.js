@@ -8,6 +8,7 @@ const WorldMap = {
   zoom: null,
   width: 0,
   height: 0,
+  mapMode: 'default',
 
   COLORS: {
     player:      '#4ade80',
@@ -106,7 +107,13 @@ const WorldMap = {
               d3.select(event.currentTarget).attr('fill', this._hoverColor(d.id));
             }
             const c = GameState.getCountry(d.id);
-            if (c) this._showTooltip(event, c.name);
+            if (c) {
+              let extra = '';
+              if (this.mapMode === 'economic')  extra = ` · $${Math.round(c.gdp)}B`;
+              if (this.mapMode === 'military')  extra = ` · Str:${GameState.calcStrength(d.id)}`;
+              if (this.mapMode === 'stability') extra = ` · Stab:${Math.round(c.stability || 70)}`;
+              this._showTooltip(event, c.name + extra);
+            }
           })
           .on('mousemove', (event) => this._moveTooltip(event))
           .on('mouseout',  (event, d) => {
@@ -130,12 +137,38 @@ const WorldMap = {
       });
   },
 
+  setMode(mode) {
+    this.mapMode = mode;
+    document.querySelectorAll('.map-mode-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById('map-mode-' + mode);
+    if (btn) btn.classList.add('active');
+    this.refresh();
+  },
+
+  _ecoColor(gdp) {
+    const t = Math.min(1, Math.log10(Math.max(1, gdp) + 1) / Math.log10(20001));
+    return `hsl(${Math.round(120 * t)},${Math.round(40 + 40 * t)}%,${Math.round(15 + 25 * t)}%)`;
+  },
+
+  _milColor(str) {
+    const t = Math.min(1, str / 8000);
+    return `hsl(${Math.round(15 - 15 * t)},${Math.round(20 + 60 * t)}%,${Math.round(18 + 20 * t)}%)`;
+  },
+
+  _stabColor(stab) {
+    const t = (stab || 70) / 100;
+    return `hsl(${Math.round(0 + 120 * t)},50%,${Math.round(15 + 15 * t)}%)`;
+  },
+
   _fillColor(id) {
     const sid = String(id);
     if (sid === GameState.selectedCountryId) return this.COLORS.selected;
     const c = GameState.getCountry(id);
     if (!c) return this.COLORS.unknown;
-    if (c.occupiedBy === GameState.playerCountryId) return '#14532d'; // dark green = annexed territory
+    if (c.occupiedBy === GameState.playerCountryId) return '#14532d';
+    if (this.mapMode === 'economic')  return this._ecoColor(c.gdp);
+    if (this.mapMode === 'military')  return this._milColor(GameState.calcStrength(id));
+    if (this.mapMode === 'stability') return this._stabColor(c.stability);
     return this.COLORS[c.relation] || this.COLORS.neutral;
   },
 
@@ -143,6 +176,7 @@ const WorldMap = {
     const c = GameState.getCountry(id);
     if (!c) return this.HOVER.unknown;
     if (c.occupiedBy === GameState.playerCountryId) return '#166534';
+    if (this.mapMode !== 'default') return '#fbbf24';
     return this.HOVER[c.relation] || this.HOVER.neutral;
   },
 

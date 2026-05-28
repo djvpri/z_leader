@@ -1,5 +1,12 @@
 'use strict';
 
+const TRADE_BLOCKS = {
+  opec:  { name: 'OPEC',           icon: '🛢',  members: new Set(['682','784','414','634','368','364','12','566','24','862','218','434','266']),                                                              bonus: { commodity: 'oil',      rate: 0.20 } },
+  eu:    { name: 'European Union', icon: '🇪🇺', members: new Set(['276','250','380','724','528','752','616','56','246','300','348','372','620','642']),                                                       bonus: { commodity: 'all',      rate: 0.10 } },
+  asean: { name: 'ASEAN',          icon: '🌏',  members: new Set(['360','458','764','704','608','104','116','418']),                                                                                          bonus: { commodity: 'industry', rate: 0.15 } },
+  au:    { name: 'African Union',  icon: '🌍',  members: new Set(['12','24','120','178','180','231','266','288','324','384','404','430','434','504','508','516','566','686','706','710','736','894']),        bonus: { commodity: 'minerals', rate: 0.15 } },
+};
+
 const COUNTRY_DATA = {
   4:   { name: 'Afghanistan',       gdp: 20,    population: 40,   military: 170, treasury: 10  },
   12:  { name: 'Algeria',           gdp: 191,   population: 45,   military: 317, treasury: 200 },
@@ -309,6 +316,7 @@ const GameState = {
   priceHistory:    { oil: [1.0], food: [1.0], industry: [1.0], minerals: [1.0], tech: [1.0] },
   _tradeStats:     {},
   _economicCycle:  { phase: 'normal', quartersLeft: 32 },
+  pandemicTicks:   0,
 
   init() {
     for (const [id, data] of Object.entries(COUNTRY_DATA)) {
@@ -332,6 +340,8 @@ const GameState = {
         leader:     { ...(PRESIDENT_DATA[id] || { title: 'President', name: 'Unknown', trait: 'nationalist' }) },
         factories:  { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 },
         inflation:  0,
+        stability:  70,
+        gdpHistory: [],
       };
     }
   },
@@ -652,7 +662,16 @@ const GameState = {
         });
         mult = hasSupplier ? 0.85 : (price > 1.3 ? 1.6 : 1.2);
       }
-      result[key]   = c.gdp * surplus * rate * price * mult;
+      // Regional trade block export bonus
+      let blockBonus = 1.0;
+      if (surplus >= 0) {
+        for (const blk of Object.values(TRADE_BLOCKS)) {
+          if (blk.members.has(sid) && (blk.bonus.commodity === 'all' || blk.bonus.commodity === key)) {
+            blockBonus *= (1 + blk.bonus.rate);
+          }
+        }
+      }
+      result[key]   = c.gdp * surplus * rate * price * mult * blockBonus;
       result.total += result[key];
     }
     return result;
@@ -728,6 +747,83 @@ const GameState = {
     return true;
   },
 
+  getCountryBlocks(id) {
+    const sid = String(id);
+    return Object.entries(TRADE_BLOCKS)
+      .filter(([, b]) => b.members.has(sid))
+      .map(([key, b]) => ({ key, name: b.name, icon: b.icon, bonus: b.bonus }));
+  },
+
+  doSpy(targetId, operation) {
+    if (!this.playerCountryId) return { ok: false, msg: 'No player.' };
+    const player = this.countries[this.playerCountryId];
+    const target = this.countries[String(targetId)];
+    if (!player || !target) return { ok: false, msg: 'Invalid target.' };
+    const ops = { sabotage: { cost: 50, rate: 0.65 }, unrest: { cost: 60, rate: 0.60 }, steal_tech: { cost: 80, rate: 0.55 } };
+    const op = ops[operation];
+    if (!op) return { ok: false, msg: 'Unknown operation.' };
+    if (player.treasury < op.cost) return { ok: false, msg: `Insufficient treasury — need $${op.cost}B.` };
+    player.treasury -= op.cost;
+    if (Math.random() >= op.rate) return { ok: false, msg: `Operation failed — agent compromised. $${op.cost}B lost.` };
+    if (operation === 'sabotage') {
+      const coms = ['oil','food','industry','minerals','tech'].filter(c => (target.factories?.[c] || 0) > 0);
+      if (coms.length > 0) {
+        const com = coms[Math.floor(Math.random() * coms.length)];
+        target.factories[com]--;
+        target.resources[com] = Math.max(0, (target.resources[com] || 0) - 20);
+        return { ok: true, msg: `Sabotage succeeded — ${com} facility in <b>${target.name}</b> destroyed.` };
+      }
+      const com = ['oil','food','industry'][Math.floor(Math.random() * 3)];
+      target.resources[com] = Math.max(5, (target.resources[com] || 20) * 0.85);
+      return { ok: true, msg: `Sabotage succeeded — ${com} output disrupted in <b>${target.name}</b>.` };
+    }
+    if (operation === 'unrest') {
+      target.stability = Math.max(0, (target.stability || 70) - 20);
+      target.gdp *= 0.97;
+      return { ok: true, msg: `Unrest fomented in <b>${target.name}</b>. Stability −20, GDP −3%.` };
+    }
+    if (operation === 'steal_tech') {
+      const available = Object.keys(TECH_TREE).filter(id =>
+        !this.unlockedTechs.has(id) && (!TECH_TREE[id].prereq || this.unlockedTechs.has(TECH_TREE[id].prereq))
+      );
+      if (available.length > 0) {
+        const techId = available[Math.floor(Math.random() * available.length)];
+        this.unlockedTechs.add(techId);
+        return { ok: true, msg: `Intelligence success — acquired <b>${TECH_TREE[techId].name}</b> technology.` };
+      }
+      if (this.currentResearch) { this.researchProgress = Math.min(TECH_TREE[this.currentResearch].quarters - 1, this.researchProgress + 2); }
+      return { ok: true, msg: 'Intelligence gathered — research accelerated by 2 quarters.' };
+    }
+    return { ok: false, msg: 'Unknown.' };
+  },
+
+  _applyDisaster(type) {
+    const ids = Object.keys(this.countries).filter(id => !this.countries[id].occupiedBy);
+    if (!ids.length) return;
+    const targetId = ids[Math.floor(Math.random() * ids.length)];
+    const target   = this.countries[targetId];
+    if (!target) return;
+    const isPlayer = targetId === this.playerCountryId;
+    if (type === 'earthquake') {
+      target.resources.minerals = Math.max(5, (target.resources.minerals || 20) * 0.70);
+      target.resources.industry = Math.max(5, (target.resources.industry || 20) * 0.80);
+      target.stability = Math.max(0, (target.stability || 70) - 25);
+      if (isPlayer) Notifications.show('Earthquake strikes your nation — Minerals −30%, Industry −20%, Stability −25!', 'danger', 8000);
+      else          Notifications.show(`Earthquake devastates <b>${target.name}</b> — resources and stability damaged.`, 'event', 6000);
+    } else if (type === 'drought') {
+      target.resources.food = Math.max(5, (target.resources.food || 30) * 0.65);
+      target.stability = Math.max(0, (target.stability || 70) - 15);
+      if (isPlayer) Notifications.show('Severe drought — Food production −35%, Stability −15!', 'danger', 8000);
+      else          Notifications.show(`Drought devastates <b>${target.name}</b> — food production plummets.`, 'event', 6000);
+    } else if (type === 'hurricane') {
+      target.resources.food     = Math.max(5, (target.resources.food     || 30) * 0.75);
+      target.resources.industry = Math.max(5, (target.resources.industry || 20) * 0.85);
+      target.stability = Math.max(0, (target.stability || 70) - 12);
+      if (isPlayer) Notifications.show('Hurricane strikes your coast — Food −25%, Industry −15%!', 'danger', 8000);
+      else          Notifications.show(`Hurricane batters <b>${target.name}</b>.`, 'event', 5000);
+    }
+  },
+
   checkVictory() {
     if (!this.playerCountryId) return null;
     const player = this.countries[this.playerCountryId];
@@ -765,6 +861,7 @@ const GameState = {
         commodityPrices:  { ...this.commodityPrices },
         priceHistory:     JSON.parse(JSON.stringify(this.priceHistory)),
         economicCycle:    { ...this._economicCycle },
+        pandemicTicks:    this.pandemicTicks || 0,
       }));
       return true;
     } catch(e) { return false; }
@@ -793,9 +890,12 @@ const GameState = {
         if (c.resources.minerals === undefined) c.resources.minerals = rd.minerals || DEFAULT_RESOURCES.minerals;
         if (c.resources.tech     === undefined) c.resources.tech     = rd.tech     || DEFAULT_RESOURCES.tech;
         if (!c.factories)             c.factories  = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 };
-        if (c.inflation === undefined) c.inflation = 0;
+        if (c.inflation  === undefined) c.inflation  = 0;
+        if (c.stability  === undefined) c.stability  = 70;
+        if (!c.gdpHistory)              c.gdpHistory = [];
       }
       this._economicCycle = s.economicCycle || { phase: 'normal', quartersLeft: 32 };
+      this.pandemicTicks  = s.pandemicTicks || 0;
       this.paused           = false;
       this.attackReady      = true;
       if (this.playerCountryId) this.updateRelations();
@@ -848,6 +948,12 @@ const GameState = {
     const cycleBonus = this._economicCycle.phase === 'boom' ? 0.0015
                      : this._economicCycle.phase === 'recession' ? -0.002 : 0;
 
+    if ((this.pandemicTicks || 0) > 0) {
+      this.pandemicTicks--;
+      if (this.pandemicTicks === 0) Notifications.show('Pandemic over — global economy begins recovering.', 'info', 6000);
+    }
+    const pandemicPenalty = (this.pandemicTicks || 0) > 0 ? 0.003 : 0;
+
     for (const [id, country] of Object.entries(this.countries)) {
       const b        = country.budget;
       const isPlayer = id === this.playerCountryId;
@@ -877,6 +983,32 @@ const GameState = {
       country.military = Math.max(1,
         country.units.infantry + country.units.tanks + country.units.artillery + country.units.fighters
       );
+
+      // ── Stabilitas (dihitung sebelum GDP agar penaltinya bisa dipakai)
+      if (!country.occupiedBy) {
+        if (country.stability === undefined) country.stability = 70;
+        let sd = 0;
+        if ((country.inflation || 0) > 10) sd -= (country.inflation - 10) * 0.04;
+        sd -= (country.enemies || []).length * 0.40;
+        if (country.treasury < 0) sd -= 0.30;
+        sd -= (country.sanctionedBy || []).length * 0.20;
+        if (netFlow > 0) sd += 0.30;
+        if ((country.enemies || []).length === 0) sd += 0.20;
+        country.stability = Math.max(0, Math.min(100, country.stability + sd));
+        if (isPlayer && country.stability < 30 && Math.random() < 0.04) {
+          Notifications.show(`Stability critical: ${Math.round(country.stability)} — unrest threatens the government.`, 'danger', 7000);
+        }
+      }
+      const stabilityPenalty = !country.occupiedBy && (country.stability || 70) < 50
+        ? (50 - (country.stability || 70)) * 0.0003 : 0;
+
+      // ── Pertumbuhan populasi (0.6%/tahun dasar, dikurangi perang & inflasi)
+      if (!country.occupiedBy) {
+        const popRate = 0.0015
+          - (country.enemies || []).length * 0.0005
+          - (country.inflation || 0) * 0.00001;
+        country.population = Math.max(0.1, country.population * (1 + Math.max(0, popRate)));
+      }
 
       // GDP growth with tech bonuses
       const res          = country.resources;
@@ -910,7 +1042,7 @@ const GameState = {
 
       country.gdp *= 1 + Math.max(0.0005,
         0.0015 + devBoost + resBonus + leaderGdpBns + cycleBonus + fdiBonus
-        - warPenalty - sanctionHit - inflPenalty - energyPenalty
+        - warPenalty - sanctionHit - inflPenalty - energyPenalty - stabilityPenalty - pandemicPenalty
       );
 
       if (isPlayer && this.unlockedTechs.has('banking') && country.treasury > 0) {
@@ -945,6 +1077,20 @@ const GameState = {
           country.treasury       = -country.gdp * 0.5;
           if (isPlayer) Notifications.show('SOVEREIGN DEFAULT — all trade partners fled, GDP crashed 20%, debt restructured.', 'danger', 12000);
         }
+      }
+
+      // ── Stability crisis (kerusuhan sipil saat stabilitas kritis)
+      if (!country.occupiedBy && (country.stability || 70) < 20 && Math.random() < 0.10) {
+        country.gdp          *= 0.93;
+        country.tradePartners = [];
+        if (isPlayer) Notifications.show('CIVIL WAR — political crisis collapses GDP and trade!', 'danger', 10000);
+      }
+
+      // ── GDP history snapshot (untuk charts, player only, sekali per tahun)
+      if (isPlayer && newYear) {
+        if (!country.gdpHistory) country.gdpHistory = [];
+        country.gdpHistory.push(Math.round(country.gdp));
+        if (country.gdpHistory.length > 30) country.gdpHistory.shift();
       }
 
       // AI factory building: invest in most-deficient commodity when flush

@@ -25,6 +25,13 @@
           <button id="btn-speed-2" class="speed-btn" onclick="setSpeed(2)">x2</button>
           <button id="btn-speed-4" class="speed-btn" onclick="setSpeed(4)">x4</button>
         </div>
+        <div id="map-modes">
+          <button id="map-mode-default" class="map-mode-btn active" onclick="WorldMap.setMode('default')" title="Relations">🗺</button>
+          <button id="map-mode-economic" class="map-mode-btn" onclick="WorldMap.setMode('economic')" title="Economy">💰</button>
+          <button id="map-mode-military" class="map-mode-btn" onclick="WorldMap.setMode('military')" title="Military">⚔</button>
+          <button id="map-mode-stability" class="map-mode-btn" onclick="WorldMap.setMode('stability')" title="Stability">⚖</button>
+        </div>
+        <button id="btn-charts" title="GDP Charts">📊</button>
         <button id="btn-pause" disabled>Pause</button>
         <button id="btn-save" title="Save Game" disabled>💾</button>
         <button id="btn-load" title="Load Game">📂</button>
@@ -133,6 +140,17 @@
             <div class="unit-row"><span class="unit-icon">🛡</span><span class="unit-name">Armor</span><span id="intel-tanks" class="unit-val">0K</span></div>
             <div class="unit-row"><span class="unit-icon">💥</span><span class="unit-name">Artillery</span><span id="intel-artillery" class="unit-val">0K</span></div>
             <div class="unit-row"><span class="unit-icon">✈</span><span class="unit-name">Air Force</span><span id="intel-fighters" class="unit-val">0K</span></div>
+          </div>
+
+          <!-- Stability (all countries) -->
+          <div id="panel-stability">
+            <div class="panel-section-title">National Stability</div>
+            <div class="stab-bar-wrap">
+              <div class="stab-track"><div id="stab-fill" class="stab-fill"></div></div>
+              <span id="stab-val" class="stab-val">70</span>
+            </div>
+            <div id="stab-status" class="stab-status"></div>
+            <div id="panel-blocks" class="block-badges"></div>
           </div>
 
           <!-- Resources (all countries) -->
@@ -276,6 +294,14 @@
             </div>
           </div>
 
+          <!-- Espionage (non-player when player exists) -->
+          <div id="panel-spy" style="display:none">
+            <div class="panel-section-title">Intelligence Operations</div>
+            <button class="spy-btn" id="btn-spy-sabotage">💥 Sabotage <span class="spy-cost">$50B</span></button>
+            <button class="spy-btn" id="btn-spy-unrest">✊ Incite Unrest <span class="spy-cost">$60B</span></button>
+            <button class="spy-btn" id="btn-spy-tech">🔬 Steal Tech <span class="spy-cost">$80B</span></button>
+          </div>
+
           <!-- Recruit (player only) -->
           <div id="panel-recruit" style="display:none">
             <div class="panel-section-title">Recruit Units</div>
@@ -373,6 +399,10 @@
 
   <div id="map-tooltip"></div>
   <div id="notifications"></div>
+  <div id="news-ticker">
+    <span class="ticker-label">WORLD</span>
+    <div id="ticker-track"><div id="ticker-inner">Awaiting world events...</div></div>
+  </div>
 
   <div id="start-modal">
     <div id="start-modal-box">
@@ -392,6 +422,17 @@
       <p id="victory-desc"></p>
       <p id="victory-time" style="font-size:12px; margin-top:8px;"></p>
       <button id="btn-victory-close">Continue Playing</button>
+    </div>
+  </div>
+
+  <div id="charts-modal" style="display:none">
+    <div id="charts-box">
+      <div id="charts-header">
+        <span>📊 GDP History</span>
+        <button id="btn-charts-close">✕</button>
+      </div>
+      <canvas id="charts-canvas" width="560" height="320"></canvas>
+      <div id="charts-legend"></div>
     </div>
   </div>
 

@@ -126,12 +126,26 @@ const WORLD_EVENTS = [
     shock: [{ com: 'minerals', dir: +1 }, { com: 'industry', dir: +1 }] },
   { msg: 'Semiconductor breakthrough — production costs fall sharply.',       type: 'milestone',
     shock: [{ com: 'tech', dir: -1 }] },
+  // Natural disasters
+  { msg: 'Powerful earthquake strikes a major urban center — infrastructure collapses.', type: 'danger',  disaster: 'earthquake' },
+  { msg: 'Severe drought threatens food supplies across an entire region.',               type: 'danger',  disaster: 'drought'    },
+  { msg: 'Hurricane devastates coastal regions — ports and farms badly damaged.',         type: 'danger',  disaster: 'hurricane'  },
+  { msg: 'Wildfire season destroys agricultural land — food output falls.',               type: 'danger',  disaster: 'drought'    },
+  { msg: 'Volcanic eruption disrupts mining operations and air transport.',               type: 'danger',  disaster: 'earthquake' },
+  // Pandemic
+  { msg: 'Novel pathogen detected — global pandemic alert issued.',                       type: 'danger',  pandemic: true         },
 ];
 
 function _randomWorldEvent() {
   const ev = WORLD_EVENTS[Math.floor(Math.random() * WORLD_EVENTS.length)];
-  Notifications.show(ev.msg, ev.type, 6000);
-  if (ev.shock) ev.shock.forEach(s => GameState.commodityShock(s.com, s.dir));
+  Notifications.show(ev.msg, ev.type, 7000);
+  if (ev.shock)    ev.shock.forEach(s => GameState.commodityShock(s.com, s.dir));
+  if (ev.disaster) GameState._applyDisaster(ev.disaster);
+  if (ev.pandemic && GameState.pandemicTicks === 0) {
+    GameState.pandemicTicks = 12;
+    Notifications.show('PANDEMIC: All nations face severe GDP penalties for 3 years!', 'danger', 12000);
+  }
+  WorldNews.add(ev.msg);
 }
 
 // ── Entry point ───────────────────────────────────────────────

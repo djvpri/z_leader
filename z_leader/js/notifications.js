@@ -41,6 +41,24 @@ const Notifications = {
   },
 };
 
+const WorldNews = {
+  _items: [],
+  _max:   10,
+
+  add(msg) {
+    const clean = msg.replace(/<[^>]+>/g, '');
+    this._items.unshift(clean);
+    if (this._items.length > this._max) this._items.pop();
+    this._render();
+  },
+
+  _render() {
+    const el = document.getElementById('ticker-inner');
+    if (!el || this._items.length === 0) return;
+    el.textContent = this._items.join('   ·   ');
+  },
+};
+
 const EventLog = {
   entries: [],
   maxEntries: 40,
