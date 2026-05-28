@@ -196,7 +196,7 @@ const UI = {
       return;
     }
 
-    const isTerritory = c.occupiedBy === GameState.playerCountryId;
+    const isTerritory = c.occupiedBy !== null && c.occupiedBy === GameState.playerCountryId;
 
     document.getElementById('panel-actions').style.display = isTerritory ? 'none' : 'block';
     document.getElementById('panel-country-name').textContent = c.name;
