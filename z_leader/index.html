@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Z Leader - Grand Strategy</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <div id="hud">
+      <div id="player-info">
+        <span id="player-country-name">-- Select Your Country --</span>
+      </div>
+      <div id="resources">
+        <div class="resource">Treasury: $<span id="treasury">0</span>B</div>
+        <div class="resource">GDP: $<span id="gdp">0</span>B/yr</div>
+        <div class="resource">Population: <span id="population">0</span>M</div>
+        <div class="resource">Military: <span id="military">0</span>K</div>
+      </div>
+      <div id="game-controls">
+        <button id="btn-pause" disabled>Pause</button>
+        <span id="game-date">Year 2026 Q1</span>
+      </div>
+    </div>
+
+    <div id="map-container">
+      <svg id="world-map"></svg>
+      <div id="loading">Loading map data...</div>
+    </div>
+
+    <div id="info-panel">
+      <div id="panel-empty">
+        <p>Click on a country to view details</p>
+      </div>
+      <div id="panel-country" style="display:none">
+        <h2 id="panel-country-name"></h2>
+        <div class="stat-row"><label>GDP</label><span id="panel-gdp"></span></div>
+        <div class="stat-row"><label>Population</label><span id="panel-population"></span></div>
+        <div class="stat-row"><label>Military</label><span id="panel-military"></span></div>
+        <div class="stat-row"><label>Treasury</label><span id="panel-treasury"></span></div>
+        <div class="stat-row"><label>Status</label><span id="panel-status"></span></div>
+        <div id="panel-actions">
+          <button id="btn-play-as" class="action-btn">Play as this Country</button>
+          <button id="btn-declare-war" class="action-btn danger" style="display:none">Declare War</button>
+          <button id="btn-propose-alliance" class="action-btn success" style="display:none">Propose Alliance</button>
+          <button id="btn-make-peace" class="action-btn neutral" style="display:none">Propose Peace</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="map-tooltip"></div>
+
+  <div id="start-modal">
+    <div id="start-modal-box">
+      <h1>Z Leader</h1>
+      <p>A grand strategy game. Lead your nation to dominance.</p>
+      <p style="margin-top:8px; color:#94a3b8; font-size:13px;">Click any country on the map to begin.</p>
+      <button id="btn-start-dismiss">Start Game</button>
+    </div>
+  </div>
+
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson-client@3/dist/topojson-client.min.js"></script>
+  <script src="js/gameState.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #0d1b2a;
+  color: #e2e8f0;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  overflow: hidden;
+  height: 100vh;
+}
+
+#app {
+  display: grid;
+  grid-template-rows: 48px 1fr;
+  grid-template-columns: 1fr 280px;
+  height: 100vh;
+}
+
+/* ── HUD ── */
+#hud {
+  grid-column: 1 / 3;
+  background: #0a1628;
+  border-bottom: 1px solid #1e3a4a;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 24px;
+}
+
+#player-info {
+  font-weight: 700;
+  font-size: 14px;
+  color: #4ade80;
+  min-width: 180px;
+  white-space: nowrap;
+}
+
+#resources {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+}
+
+.resource {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.resource span {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+#game-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+#game-date {
+  font-size: 13px;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+/* ── Map ── */
+#map-container {
+  position: relative;
+  background: #0d1b2a;
+  overflow: hidden;
+}
+
+#world-map {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #94a3b8;
+  font-size: 15px;
+  pointer-events: none;
+}
+
+/* ── Info Panel ── */
+#info-panel {
+  background: #0a1628;
+  border-left: 1px solid #1e3a4a;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+#panel-empty {
+  color: #475569;
+  text-align: center;
+  margin-top: 40px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+#panel-country h2 {
+  font-size: 17px;
+  margin-bottom: 14px;
+  color: #e2e8f0;
+  border-bottom: 1px solid #1e3a4a;
+  padding-bottom: 10px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.stat-row label {
+  color: #64748b;
+}
+
+.stat-row span {
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+#panel-actions {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.action-btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+
+.action-btn {
+  background: #1e4a7a;
+  color: #e2e8f0;
+}
+.action-btn:hover { background: #2563a8; }
+
+.action-btn.danger {
+  background: #7f1d1d;
+  color: #fca5a5;
+}
+.action-btn.danger:hover { background: #991b1b; }
+
+.action-btn.success {
+  background: #14532d;
+  color: #86efac;
+}
+.action-btn.success:hover { background: #166534; }
+
+.action-btn.neutral {
+  background: #334155;
+  color: #cbd5e1;
+}
+.action-btn.neutral:hover { background: #475569; }
+
+/* ── Generic buttons ── */
+button {
+  padding: 6px 14px;
+  background: #1e3a4a;
+  color: #e2e8f0;
+  border: 1px solid #2d5a7a;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.15s;
+}
+button:hover { background: #2d5a7a; }
+button:disabled { opacity: 0.4; cursor: default; }
+
+/* ── Tooltip ── */
+#map-tooltip {
+  position: fixed;
+  background: rgba(10, 22, 40, 0.95);
+  color: #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  display: none;
+  border: 1px solid #1e3a4a;
+  z-index: 100;
+  white-space: nowrap;
+}
+
+/* ── Country paths ── */
+.country {
+  cursor: pointer;
+  transition: fill 0.12s;
+}
+
+/* ── Start Modal ── */
+#start-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+}
+
+#start-modal-box {
+  background: #0f2133;
+  border: 1px solid #2d5a7a;
+  border-radius: 8px;
+  padding: 40px 48px;
+  text-align: center;
+  max-width: 400px;
+}
+
+#start-modal-box h1 {
+  font-size: 36px;
+  color: #4ade80;
+  letter-spacing: 4px;
+  margin-bottom: 12px;
+}
+
+#start-modal-box p {
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+#btn-start-dismiss {
+  margin-top: 24px;
+  padding: 10px 28px;
+  font-size: 14px;
+  background: #166534;
+  border-color: #4ade80;
+  color: #4ade80;
+}
+#btn-start-dismiss:hover { background: #14532d; }
