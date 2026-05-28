@@ -3,12 +3,21 @@
 const MAJOR_POWER_IDS = new Set(['840', '156', '643', '276', '826', '250', '392', '356']);
 
 const AI = {
+  _bgNotifs: 0, // background notifications this tick (throttled)
+
   tick() {
+    this._bgNotifs = 0;
     const pid = GameState.playerCountryId;
     for (const id of Object.keys(GameState.countries)) {
       if (id === pid) continue;
       this._process(id);
     }
+  },
+
+  _notify(msg, type, dur = 4000) {
+    if (this._bgNotifs >= 2) return;
+    this._bgNotifs++;
+    Notifications.show(msg, type, dur);
   },
 
   _process(id) {
@@ -23,17 +32,17 @@ const AI = {
 
   _adjustBudget(c) {
     if (c.enemies.length > 0) {
-      c.budget.militaryAlloc = Math.min(0.70, c.budget.militaryAlloc + 0.05);
-      c.budget.devAlloc      = Math.max(0.05, c.budget.devAlloc - 0.025);
+      c.budget.militaryAlloc = Math.min(0.65, c.budget.militaryAlloc + 0.04);
+      c.budget.devAlloc      = Math.max(0.05, c.budget.devAlloc - 0.02);
     } else {
-      c.budget.militaryAlloc += (0.30 - c.budget.militaryAlloc) * 0.10;
-      c.budget.devAlloc      += (0.30 - c.budget.devAlloc)      * 0.10;
+      c.budget.militaryAlloc += (0.30 - c.budget.militaryAlloc) * 0.08;
+      c.budget.devAlloc      += (0.30 - c.budget.devAlloc)      * 0.08;
     }
   },
 
   _seekPeace(id, c) {
     if (c.enemies.length === 0) return;
-    if (Math.random() > 0.06)   return;
+    if (Math.random() > 0.07)   return;
 
     const myStr = GameState.calcStrength(id);
     let avgEnemyStr = 0;
@@ -42,8 +51,8 @@ const AI = {
 
     if (myStr >= avgEnemyStr * 0.4 && c.treasury >= 0) return;
 
-    const eid    = c.enemies[0];
-    const enemy  = GameState.countries[eid];
+    const eid   = c.enemies[0];
+    const enemy = GameState.countries[eid];
     if (!enemy) return;
 
     this._makePeaceBetween(id, eid);
@@ -51,14 +60,15 @@ const AI = {
     const pid = GameState.playerCountryId;
     if (id === pid || eid === pid) {
       Notifications.show(`<b>${c.name}</b> proposes peace — you are no longer at war.`, 'peace', 6000);
-    } else if (MAJOR_POWER_IDS.has(id) || MAJOR_POWER_IDS.has(eid) || Math.random() < 0.15) {
-      Notifications.show(`<b>${c.name}</b> signs peace with <b>${enemy.name}</b>.`, 'peace', 4000);
+    } else {
+      this._notify(`<b>${c.name}</b> signs peace with <b>${enemy.name}</b>.`, 'peace');
     }
   },
 
   _attackEnemies(id, c) {
-    if (c.enemies.length === 0)  return;
-    if (Math.random() > 0.30)    return;
+    if (c.enemies.length === 0) return;
+    if (GameState.calcStrength(id) <= 0) return;
+    if (Math.random() > 0.18)   return;
 
     const eid = c.enemies[Math.floor(Math.random() * c.enemies.length)];
     this._aiAttack(id, eid);
@@ -71,7 +81,8 @@ const AI = {
 
     const atkStr = GameState.calcStrength(atkId);
     const defStr = GameState.calcStrength(defId);
-    const ratio  = atkStr / (defStr * 1.25 + 1);
+    if (atkStr <= 0) return;
+    const ratio = atkStr / (defStr * 1.25 + 1);
 
     let outcome, atkLoss, defLoss;
     if      (ratio >= 2.0) { outcome = 'decisive'; atkLoss = 0.05; defLoss = 0.65; }
@@ -84,26 +95,26 @@ const AI = {
 
     const pid = GameState.playerCountryId;
     if (defId === pid) {
-      const typeMap = { decisive: 'danger', victory: 'danger', stalemate: 'warning', defeat: 'war' };
-      Notifications.show(
-        `<b>${atk.name}</b> attacks you! ${outcome === 'defeat' ? 'They were repelled.' : 'You suffered losses.'}`,
-        typeMap[outcome], 7000
-      );
-    } else if (atkId === pid) {
-      // player-initiated, handled in UI
-    } else if (MAJOR_POWER_IDS.has(atkId) || MAJOR_POWER_IDS.has(defId)) {
-      if (Math.random() < 0.25) {
-        Notifications.show(`<b>${atk.name}</b> strikes <b>${def.name}</b>. ${outcome}.`, 'war', 4000);
+      if (outcome === 'defeat') {
+        Notifications.show(`<b>${atk.name}</b> attacked — you repelled them! (${atkStr} vs ${defStr})`, 'info', 6000);
+      } else {
+        const sev = outcome === 'decisive' ? 'danger' : outcome === 'victory' ? 'danger' : 'warning';
+        Notifications.show(`<b>${atk.name}</b> attacks you! (${atkStr} vs ${defStr}) — ${outcome}.`, sev, 7000);
+      }
+    } else if (atkId !== pid) {
+      if (MAJOR_POWER_IDS.has(atkId) || MAJOR_POWER_IDS.has(defId)) {
+        if (Math.random() < 0.20) {
+          this._notify(`<b>${atk.name}</b> strikes <b>${def.name}</b>. ${outcome}.`, 'war');
+        }
       }
     }
   },
 
   _declareWar(id, c) {
     if (c.enemies.length >= 2) return;
-    if (Math.random() > 0.03)  return;
+    if (Math.random() > 0.015) return;
 
-    const myStr = GameState.calcStrength(id);
-
+    const myStr      = GameState.calcStrength(id);
     const candidates = Object.keys(GameState.countries).filter(tid =>
       tid !== id && !c.allies.includes(tid) && !c.enemies.includes(tid)
     );
@@ -111,7 +122,7 @@ const AI = {
 
     const pool = candidates
       .map(tid => ({ tid, str: GameState.calcStrength(tid) }))
-      .filter(x => x.str < myStr * 1.5)
+      .filter(x => x.str > 0 && x.str < myStr * 1.5)
       .sort((a, b) => b.str - a.str)
       .slice(0, 6);
 
@@ -125,18 +136,18 @@ const AI = {
     const pid = GameState.playerCountryId;
     if (chosen.tid === pid) {
       Notifications.show(`<b>${c.name}</b> declared war on you!`, 'war', 9000);
-    } else if (id === pid) {
-      // player actions handled in UI
-    } else if (MAJOR_POWER_IDS.has(id) || MAJOR_POWER_IDS.has(chosen.tid) || Math.random() < 0.2) {
-      Notifications.show(`<b>${c.name}</b> declares war on <b>${target.name}</b>!`, 'war', 5000);
+    } else if (id !== pid) {
+      if (MAJOR_POWER_IDS.has(id) || MAJOR_POWER_IDS.has(chosen.tid) || Math.random() < 0.15) {
+        this._notify(`<b>${c.name}</b> declares war on <b>${target.name}</b>!`, 'war', 5000);
+      }
     }
   },
 
   _formAlliance(id, c) {
     if (c.allies.length >= 2)  return;
-    if (Math.random() > 0.025) return;
+    if (Math.random() > 0.012) return;
 
-    const pid = GameState.playerCountryId;
+    const pid        = GameState.playerCountryId;
     const candidates = Object.keys(GameState.countries).filter(tid =>
       tid !== id && tid !== pid &&
       !c.allies.includes(tid) && !c.enemies.includes(tid)
@@ -149,8 +160,8 @@ const AI = {
 
     this._allyBetween(id, tid);
 
-    if (MAJOR_POWER_IDS.has(id) || MAJOR_POWER_IDS.has(tid) || Math.random() < 0.15) {
-      Notifications.show(`<b>${c.name}</b> forms alliance with <b>${target.name}</b>.`, 'alliance', 4000);
+    if (MAJOR_POWER_IDS.has(id) || MAJOR_POWER_IDS.has(tid) || Math.random() < 0.12) {
+      this._notify(`<b>${c.name}</b> forms alliance with <b>${target.name}</b>.`, 'alliance');
     }
   },
 
@@ -162,8 +173,9 @@ const AI = {
     c1.enemies = [...new Set([...c1.enemies, id2])];
     c2.allies  = c2.allies.filter(x => x !== id1);
     c2.enemies = [...new Set([...c2.enemies, id1])];
-    const pid = GameState.playerCountryId;
-    if (id1 === pid || id2 === pid) GameState.updateRelations();
+    if (id1 === GameState.playerCountryId || id2 === GameState.playerCountryId) {
+      GameState.updateRelations();
+    }
   },
 
   _makePeaceBetween(id1, id2) {
@@ -172,8 +184,9 @@ const AI = {
     if (!c1 || !c2) return;
     c1.enemies = c1.enemies.filter(x => x !== id2);
     c2.enemies = c2.enemies.filter(x => x !== id1);
-    const pid = GameState.playerCountryId;
-    if (id1 === pid || id2 === pid) GameState.updateRelations();
+    if (id1 === GameState.playerCountryId || id2 === GameState.playerCountryId) {
+      GameState.updateRelations();
+    }
   },
 
   _allyBetween(id1, id2) {
@@ -184,7 +197,8 @@ const AI = {
     c1.allies  = [...new Set([...c1.allies, id2])];
     c2.enemies = c2.enemies.filter(x => x !== id1);
     c2.allies  = [...new Set([...c2.allies, id1])];
-    const pid = GameState.playerCountryId;
-    if (id1 === pid || id2 === pid) GameState.updateRelations();
+    if (id1 === GameState.playerCountryId || id2 === GameState.playerCountryId) {
+      GameState.updateRelations();
+    }
   },
 };
