@@ -773,6 +773,7 @@ const GameState = {
   tickUpdate() {
     this.quarter++;
     if (this.quarter > 4) { this.quarter = 1; this.year++; }
+    const newYear = this.quarter === 1;
     this.attackReady = true;
 
     // Research progress
@@ -849,6 +850,26 @@ const GameState = {
             country.factories[target]++;
             country.resources[target] += 20;
           }
+        }
+      }
+
+      // Annual infrastructure decay: each factory level has 15% chance to drop 1 level per year
+      if (newYear && !country.occupiedBy) {
+        if (!country.factories) country.factories = { oil: 0, food: 0, industry: 0, minerals: 0, tech: 0 };
+        const BUILD_NAMES = { oil: 'Oil Refinery', food: 'Agri Complex', industry: 'Industrial Zone', minerals: 'Mineral Mine', tech: 'Tech Hub' };
+        const decayed = [];
+        for (const com of ['oil', 'food', 'industry', 'minerals', 'tech']) {
+          if ((country.factories[com] || 0) > 0 && Math.random() < 0.15) {
+            country.factories[com]--;
+            country.resources[com] = Math.max(0, (country.resources[com] || 0) - 20);
+            if (isPlayer) decayed.push(BUILD_NAMES[com]);
+          }
+        }
+        if (decayed.length > 0) {
+          Notifications.show(
+            `Infrastructure decay: <b>${decayed.join(', ')}</b> degraded by 1 level.`,
+            'warning', 6000
+          );
         }
       }
     }
